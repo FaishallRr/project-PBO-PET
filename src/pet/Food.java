@@ -9,6 +9,7 @@ public class Food {
         this.nutritionValue = nutritionValue;
     }
 
+    // Getter untuk mengambil data makanan
     public String getName() { return name; }
     public int getNutritionValue() { return nutritionValue; }
 }

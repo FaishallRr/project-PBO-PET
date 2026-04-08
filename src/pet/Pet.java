@@ -1,35 +1,35 @@
 package pet;
 
 public class Pet {
-    // M1 - Atribut dasar untuk Pet
+    // [M1] Atribut diubah ke PRIVATE agar tidak bisa diakses sembarangan 
     private String name;
     private int hunger;
     private int happiness;
     private int energy;
 
-    // M2 - Tambahan atribut untuk kesehatan
+    // [M2] Atribut tambahan 
     private int health; 
 
-    // M1 - Konstruktor untuk inisialisasi Pet
+    // [Milestone 1] Constructor: Inisialisasi atribut saat object dibuat
     public Pet(String name, int hunger, int happiness, int energy) {
         this.name = name;
-        // M2 - Validasi awal untuk atribut
+        // [M2] Gunakan setter agar input awal tetap divalidasi 
         setHunger(hunger);
         setHappiness(happiness);
         setEnergy(energy);
-        this.health = 100;
+        this.health = 100; // Default health
     }
 
-    // M2 - Validasi: hunger 0-100
-    //===========================================================================
+    // [M2] GETTER & SETTER dengan VALIDASI 
     public String getName() { return name; }
 
     public void setHunger(int hunger) {
+        // Validasi: hunger harus di antara 0-100 
         if (hunger < 0) this.hunger = 0;
         else if (hunger > 100) this.hunger = 100;
         else this.hunger = hunger;
         
-        // M2 - Jika hunger terlalu tinggi, kesehatan menurun
+        // [M2] Jika terlalu lapar (>= 90), health berkurang 
         if (this.hunger >= 90) this.health -= 10;
     }
 
@@ -44,16 +44,12 @@ public class Pet {
         else if (energy > 100) this.energy = 100;
         else this.energy = energy;
     }
-    //===========================================================================
 
-
-
-    //==========================================================================
-    // M1 - Method untuk interaksi dasar
-    public void feed(Food food) { // [M2] Menggunakan class Food [cite: 66]
+    // [M2] Method feed diperbarui menggunakan class Food
+    public void feed(Food food) {
         System.out.println(name + " makan " + food.getName());
         setHunger(this.hunger - food.getNutritionValue());
-        timePasses();
+        timePasses(); // [M2] Simulasi waktu berlalu 
     }
 
     public void play() {
@@ -63,28 +59,23 @@ public class Pet {
         timePasses();
     }
 
-    public void sleep() {
-        System.out.println(name + " sedang tidur...");
-        setEnergy(this.energy + 30);
-        timePasses();
-    }
-
-      public void showStatus() {
-        System.out.println("\n--- STATUS " + name.toUpperCase() + " ---");
-        System.out.println("Hunger    : " + hunger + " " + getBar(hunger)); // M2 - Bar visual
-        System.out.println("Happiness : " + happiness + " " + getBar(happiness));
-        System.out.println("Energy    : " + energy + " " + getBar(energy));
-        System.out.println("Health    : " + health);
-    }
-    //==========================================================================
-
+    // [M2] Method internal untuk mengubah status setiap kali ada aksi 
     private void timePasses() {
         this.hunger += 10;
         this.happiness -= 5;
         this.energy -= 5;
     }
 
-    // M2 - Helper untuk bar visual
+    public void showStatus() {
+        System.out.println("\n--- STATUS " + name.toUpperCase() + " ---");
+        // [M2] Tampilan dengan bar visual 
+        System.out.println("Hunger    : " + hunger + " " + getBar(hunger));
+        System.out.println("Happiness : " + happiness + " " + getBar(happiness));
+        System.out.println("Energy    : " + energy + " " + getBar(energy));
+        System.out.println("Health    : " + health);
+    }
+
+    // Helper untuk membuat bar visual [####------] 
     private String getBar(int value) {
         int dots = value / 10;
         String bar = "[";
