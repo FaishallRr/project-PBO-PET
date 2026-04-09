@@ -15,6 +15,8 @@ public class Main {
 
         // Menampilkan status akhir
         System.out.println("\nSetelah beraktivitas:");
+
+        // Menampilkan status akhir
         myPet.showStatus();
     }
 }
