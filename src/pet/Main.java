@@ -2,14 +2,19 @@ package pet;
 
 public class Main {
     public static void main(String[] args) {
-        Pet myPet = new Pet("Momo", 50, 50, 50);
-        Food snack = new Food("Snack Ikan", 20);
+        // Membuat 1 object Pet (Instansiasi) 
+        Pet myPet = new Pet("T-Rex Kalimantan", 50, 50, 50);
 
+        // Menampilkan status awal
         myPet.showStatus();
-        
+
+        // Memanggil semua method aksi sesuai instruksi 
         myPet.play();
-        myPet.feed(snack); // Memberi makan menggunakan objek Food
-        
+        myPet.feed();
+        myPet.sleep();
+
+        // Menampilkan status akhir
+        System.out.println("\nSetelah beraktivitas:");
         myPet.showStatus();
     }
 }
