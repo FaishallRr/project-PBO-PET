@@ -18,7 +18,7 @@ public class Pet2D extends Pane {
     // Body parts
     private Ellipse body;
     private Ellipse head;
-    
+
     // Eyes
     private Ellipse leftEye, rightEye;
     private Circle leftPupil, rightPupil;
@@ -40,7 +40,7 @@ public class Pet2D extends Pane {
     // Interaction states
     private double baseHeadY = 90;
     private double baseBodyY = 185;
-    
+
     private Point2D leftEyeCenter = new Point2D(95, 95);
     private Point2D rightEyeCenter = new Point2D(165, 95);
 
@@ -149,7 +149,8 @@ public class Pet2D extends Pane {
         circleRightGlint2 = new Circle(rightEyeCenter.getX() + 4, rightEyeCenter.getY() + 4, 2);
         circleRightGlint2.setFill(Color.WHITE);
 
-        getChildren().addAll(leftEye, rightEye, leftPupil, rightPupil, leftGlint1, rightGlint1, circleLeftGlint2, circleRightGlint2);
+        getChildren().addAll(leftEye, rightEye, leftPupil, rightPupil, leftGlint1, rightGlint1, circleLeftGlint2,
+                circleRightGlint2);
 
         // 7. Blush
         leftBlush = new Ellipse(leftEyeCenter.getX() - 15, leftEyeCenter.getY() + 23, 13, 8);
@@ -176,21 +177,19 @@ public class Pet2D extends Pane {
             // Beak
             birdBeakUpper = new Path();
             birdBeakUpper.getElements().addAll(
-                new MoveTo(116, baseHeadY + 6),
-                new LineTo(144, baseHeadY + 6),
-                new LineTo(130, baseHeadY + 22),
-                new ClosePath()
-            );
+                    new MoveTo(116, baseHeadY + 6),
+                    new LineTo(144, baseHeadY + 6),
+                    new LineTo(130, baseHeadY + 22),
+                    new ClosePath());
             birdBeakUpper.setFill(Color.rgb(255, 140, 15));
             birdBeakUpper.setStroke(Color.rgb(230, 120, 10));
 
             birdBeakLower = new Path();
             birdBeakLower.getElements().addAll(
-                new MoveTo(120, baseHeadY + 7),
-                new LineTo(140, baseHeadY + 7),
-                new LineTo(130, baseHeadY + 16),
-                new ClosePath()
-            );
+                    new MoveTo(120, baseHeadY + 7),
+                    new LineTo(140, baseHeadY + 7),
+                    new LineTo(130, baseHeadY + 16),
+                    new ClosePath());
             birdBeakLower.setFill(Color.rgb(230, 120, 10));
             getChildren().addAll(birdBeakLower, birdBeakUpper);
         }
@@ -199,10 +198,9 @@ public class Pet2D extends Pane {
         if (!species.equals("burung")) {
             mouth = new Path();
             mouth.getElements().addAll(
-                new MoveTo(120, baseHeadY + 17),
-                new QuadCurveTo(125, baseHeadY + 22, 130, baseHeadY + 17),
-                new QuadCurveTo(135, baseHeadY + 22, 140, baseHeadY + 17)
-            );
+                    new MoveTo(120, baseHeadY + 17),
+                    new QuadCurveTo(125, baseHeadY + 22, 130, baseHeadY + 17),
+                    new QuadCurveTo(135, baseHeadY + 22, 140, baseHeadY + 17));
             mouth.setStroke(Color.rgb(120, 50, 60));
             mouth.setStrokeWidth(3.0);
             mouth.setFill(null);
@@ -221,11 +219,14 @@ public class Pet2D extends Pane {
     private void buildLegs(Color primaryColor, Color darkColor) {
         DropShadow clayShadow = new DropShadow(10, 0, 5, Color.rgb(0, 0, 0, 0.15));
         double legY = baseBodyY + 52;
-        
+
         Color pawColor;
-        if (species.equals("kucing")) pawColor = Color.rgb(255, 170, 180);
-        else if (species.equals("anjing")) pawColor = Color.rgb(250, 243, 225);
-        else pawColor = Color.rgb(255, 165, 105);
+        if (species.equals("kucing"))
+            pawColor = Color.rgb(255, 170, 180);
+        else if (species.equals("anjing"))
+            pawColor = Color.rgb(250, 243, 225);
+        else
+            pawColor = Color.rgb(255, 165, 105);
 
         Ellipse leftLegShape = new Ellipse(100, legY, 16, 24);
         leftLegShape.setFill(darkColor);
@@ -249,38 +250,34 @@ public class Pet2D extends Pane {
     private void buildCatEars(Color furColor, Color pinkColor) {
         leftEar = new Path();
         leftEar.getElements().addAll(
-            new MoveTo(60, baseHeadY - 45),
-            new QuadCurveTo(32, baseHeadY - 88, 38, baseHeadY - 88),
-            new QuadCurveTo(72, baseHeadY - 68, 80, baseHeadY - 52),
-            new ClosePath()
-        );
+                new MoveTo(60, baseHeadY - 45),
+                new QuadCurveTo(32, baseHeadY - 88, 38, baseHeadY - 88),
+                new QuadCurveTo(72, baseHeadY - 68, 80, baseHeadY - 52),
+                new ClosePath());
         leftEar.setFill(furColor);
 
         Path innerEarL = new Path();
         innerEarL.getElements().addAll(
-            new MoveTo(61, baseHeadY - 49),
-            new QuadCurveTo(42, baseHeadY - 78, 45, baseHeadY - 78),
-            new QuadCurveTo(68, baseHeadY - 62, 73, baseHeadY - 52),
-            new ClosePath()
-        );
+                new MoveTo(61, baseHeadY - 49),
+                new QuadCurveTo(42, baseHeadY - 78, 45, baseHeadY - 78),
+                new QuadCurveTo(68, baseHeadY - 62, 73, baseHeadY - 52),
+                new ClosePath());
         innerEarL.setFill(pinkColor);
 
         rightEar = new Path();
         rightEar.getElements().addAll(
-            new MoveTo(200, baseHeadY - 45),
-            new QuadCurveTo(228, baseHeadY - 88, 222, baseHeadY - 88),
-            new QuadCurveTo(188, baseHeadY - 68, 180, baseHeadY - 52),
-            new ClosePath()
-        );
+                new MoveTo(200, baseHeadY - 45),
+                new QuadCurveTo(228, baseHeadY - 88, 222, baseHeadY - 88),
+                new QuadCurveTo(188, baseHeadY - 68, 180, baseHeadY - 52),
+                new ClosePath());
         rightEar.setFill(furColor);
 
         Path innerEarR = new Path();
         innerEarR.getElements().addAll(
-            new MoveTo(199, baseHeadY - 49),
-            new QuadCurveTo(218, baseHeadY - 78, 215, baseHeadY - 78),
-            new QuadCurveTo(192, baseHeadY - 62, 187, baseHeadY - 52),
-            new ClosePath()
-        );
+                new MoveTo(199, baseHeadY - 49),
+                new QuadCurveTo(218, baseHeadY - 78, 215, baseHeadY - 78),
+                new QuadCurveTo(192, baseHeadY - 62, 187, baseHeadY - 52),
+                new ClosePath());
         innerEarR.setFill(pinkColor);
 
         getChildren().addAll(leftEar, rightEar, innerEarL, innerEarR);
@@ -289,20 +286,18 @@ public class Pet2D extends Pane {
     private void buildDogEars(Color furDarkColor) {
         leftEar = new Path();
         leftEar.getElements().addAll(
-            new MoveTo(62, baseHeadY - 32),
-            new QuadCurveTo(25, baseHeadY - 38, 28, baseHeadY + 8),
-            new QuadCurveTo(45, baseHeadY + 28, 68, baseHeadY - 15),
-            new ClosePath()
-        );
+                new MoveTo(62, baseHeadY - 32),
+                new QuadCurveTo(25, baseHeadY - 38, 28, baseHeadY + 8),
+                new QuadCurveTo(45, baseHeadY + 28, 68, baseHeadY - 15),
+                new ClosePath());
         leftEar.setFill(furDarkColor);
 
         rightEar = new Path();
         rightEar.getElements().addAll(
-            new MoveTo(198, baseHeadY - 32),
-            new QuadCurveTo(235, baseHeadY - 38, 232, baseHeadY + 8),
-            new QuadCurveTo(215, baseHeadY + 28, 192, baseHeadY - 15),
-            new ClosePath()
-        );
+                new MoveTo(198, baseHeadY - 32),
+                new QuadCurveTo(235, baseHeadY - 38, 232, baseHeadY + 8),
+                new QuadCurveTo(215, baseHeadY + 28, 192, baseHeadY - 15),
+                new ClosePath());
         rightEar.setFill(furDarkColor);
 
         getChildren().addAll(leftEar, rightEar);
@@ -320,32 +315,29 @@ public class Pet2D extends Pane {
         tail = new Path();
         if (species.equals("kucing")) {
             tail.getElements().addAll(
-                new MoveTo(185, baseBodyY + 40),
-                new QuadCurveTo(240, baseBodyY + 40, 250, baseBodyY - 15),
-                new QuadCurveTo(256, baseBodyY - 55, 242, baseBodyY - 55),
-                new QuadCurveTo(236, baseBodyY - 28, 226, baseBodyY + 12),
-                new QuadCurveTo(210, baseBodyY + 25, 185, baseBodyY + 46),
-                new ClosePath()
-            );
+                    new MoveTo(185, baseBodyY + 40),
+                    new QuadCurveTo(240, baseBodyY + 40, 250, baseBodyY - 15),
+                    new QuadCurveTo(256, baseBodyY - 55, 242, baseBodyY - 55),
+                    new QuadCurveTo(236, baseBodyY - 28, 226, baseBodyY + 12),
+                    new QuadCurveTo(210, baseBodyY + 25, 185, baseBodyY + 46),
+                    new ClosePath());
             tail.setFill(furColor);
         } else if (species.equals("anjing")) {
             tail.getElements().addAll(
-                new MoveTo(185, baseBodyY + 28),
-                new QuadCurveTo(230, baseBodyY + 20, 242, baseBodyY - 20),
-                new QuadCurveTo(230, baseBodyY - 6, 185, baseBodyY + 40),
-                new ClosePath()
-            );
+                    new MoveTo(185, baseBodyY + 28),
+                    new QuadCurveTo(230, baseBodyY + 20, 242, baseBodyY - 20),
+                    new QuadCurveTo(230, baseBodyY - 6, 185, baseBodyY + 40),
+                    new ClosePath());
             tail.setFill(darkColor);
         } else {
             // Bird tail feathers
             tail.getElements().addAll(
-                new MoveTo(116, baseBodyY + 60),
-                new LineTo(102, baseBodyY + 95),
-                new LineTo(130, baseBodyY + 75),
-                new LineTo(158, baseBodyY + 95),
-                new LineTo(144, baseBodyY + 60),
-                new ClosePath()
-            );
+                    new MoveTo(116, baseBodyY + 60),
+                    new LineTo(102, baseBodyY + 95),
+                    new LineTo(130, baseBodyY + 75),
+                    new LineTo(158, baseBodyY + 95),
+                    new LineTo(144, baseBodyY + 60),
+                    new ClosePath());
             tail.setFill(darkColor);
         }
         getChildren().add(tail);
@@ -425,9 +417,11 @@ public class Pet2D extends Pane {
         }
     }
 
-    /* ================================================================
-     *  EYE TRACKING
-     * ================================================================ */
+    /*
+     * ================================================================
+     * EYE TRACKING
+     * ================================================================
+     */
     public void lookAt(double mx, double my) {
         double lx = leftEyeCenter.getX();
         double ly = leftEyeCenter.getY();
@@ -462,7 +456,8 @@ public class Pet2D extends Pane {
         double dy = mousePos.getY() - absoluteEyeY;
         double distance = Math.sqrt(dx * dx + dy * dy);
 
-        if (distance == 0) return new Point2D(0, 0);
+        if (distance == 0)
+            return new Point2D(0, 0);
 
         double maxOffset = 5.5;
         double offsetScale = Math.min(maxOffset, distance * 0.025);
@@ -470,9 +465,11 @@ public class Pet2D extends Pane {
         return new Point2D((dx / distance) * offsetScale, (dy / distance) * offsetScale);
     }
 
-    /* ================================================================
-     *  ANIMATIONS
-     * ================================================================ */
+    /*
+     * ================================================================
+     * ANIMATIONS
+     * ================================================================
+     */
     private void startAnimations() {
         customAnimTimer = new AnimationTimer() {
             @Override
@@ -483,7 +480,7 @@ public class Pet2D extends Pane {
                 double breath = 1.0 + 0.025 * Math.sin(t * 3.5);
                 body.setScaleY(breath);
                 body.setScaleX(1.0 + 0.01 * Math.cos(t * 3.5));
-                
+
                 double headBreath = 1.0 + 0.01 * Math.sin(t * 3.5 + 0.4);
                 head.setScaleX(headBreath);
                 head.setScaleY(headBreath);
@@ -508,9 +505,11 @@ public class Pet2D extends Pane {
         customAnimTimer.start();
     }
 
-    /* ================================================================
-     *  INTERACTION HOTSPOTS
-     * ================================================================ */
+    /*
+     * ================================================================
+     * INTERACTION HOTSPOTS
+     * ================================================================
+     */
     private void setupClickHotspots() {
         // Head Click -> Wiggle, blush, bounce
         head.setOnMouseClicked(e -> {
@@ -553,24 +552,29 @@ public class Pet2D extends Pane {
                 SoundManager.getInstance().play("happy");
                 Timeline tailFrenzy = new Timeline();
                 for (int i = 0; i < 10; i++) {
-                    tailFrenzy.getKeyFrames().add(new KeyFrame(Duration.millis(i * 100), 
-                        new KeyValue(tail.rotateProperty(), (i % 2 == 0 ? 35 : -15))
-                    ));
+                    tailFrenzy.getKeyFrames().add(new KeyFrame(Duration.millis(i * 100),
+                            new KeyValue(tail.rotateProperty(), (i % 2 == 0 ? 35 : -15))));
                 }
                 tailFrenzy.play();
             });
         }
     }
 
-    /* ================================================================
-     *  EXPRESSIONS
-     * ================================================================ */
+    /*
+     * ================================================================
+     * EXPRESSIONS
+     * ================================================================
+     */
     public void setExpression(String expr) {
         // Reset default eyes
-        leftEye.setScaleY(1.0); leftEye.setScaleX(1.0);
-        rightEye.setScaleY(1.0); rightEye.setScaleX(1.0);
-        leftBlush.setScaleX(1.0); leftBlush.setScaleY(1.0);
-        rightBlush.setScaleX(1.0); rightBlush.setScaleY(1.0);
+        leftEye.setScaleY(1.0);
+        leftEye.setScaleX(1.0);
+        rightEye.setScaleY(1.0);
+        rightEye.setScaleX(1.0);
+        leftBlush.setScaleX(1.0);
+        leftBlush.setScaleY(1.0);
+        rightBlush.setScaleX(1.0);
+        rightBlush.setScaleY(1.0);
 
         if (mouth != null) {
             mouth.setScaleX(1.0);
@@ -595,7 +599,8 @@ public class Pet2D extends Pane {
                 rightEye.setScaleY(0.65);
                 if (mouth != null) {
                     mouth.setScaleX(0.85);
-                    mouth.setScaleY(-1.2); // invert curve for sad frown
+                    mouth.setScaleY(-1.2);
+                    mouth.setTranslateY(240);
                 }
                 break;
             case "sleepy":
@@ -621,7 +626,7 @@ public class Pet2D extends Pane {
                 jump.setToX(1.18);
                 jump.setAutoReverse(true);
                 jump.setCycleCount(2);
-                
+
                 TranslateTransition hop = new TranslateTransition(Duration.millis(250), this);
                 hop.setByY(-50);
                 hop.setAutoReverse(true);
@@ -648,11 +653,13 @@ public class Pet2D extends Pane {
     }
 
     public void stopIdle() {
-        if (customAnimTimer != null) customAnimTimer.stop();
+        if (customAnimTimer != null)
+            customAnimTimer.stop();
     }
 
     public void restartIdle() {
-        if (customAnimTimer != null) customAnimTimer.start();
+        if (customAnimTimer != null)
+            customAnimTimer.start();
         setRotate(0);
     }
 }

@@ -6,7 +6,7 @@ import javafx.geometry.*;
 import javafx.scene.*;
 import javafx.scene.control.*;
 import javafx.scene.effect.DropShadow;
-import javafx.scene.input.KeyCode;
+
 import javafx.scene.layout.*;
 import javafx.scene.paint.*;
 import javafx.scene.shape.Circle;
@@ -27,10 +27,6 @@ public class GameGUI extends Application {
 
     private Pet pet;
     private Pet2D pet2D;
-    private Pet3D pet3D;
-    private boolean use3D = false;
-    private SubScene subScene3D;
-    private PerspectiveCamera camera3D;
     private DatabaseManager db;
     private SoundManager sound;
     private boolean soundEnabled = true;
@@ -131,10 +127,6 @@ public class GameGUI extends Application {
             soundBtn.setStyle(soundBtn.getStyle() + ";-fx-opacity:0.5;");
         }
 
-        Button viewBtn = new Button("\uD83D\uDD3D");
-        viewBtn.getStyleClass().addAll("top-icon-btn", "view-btn");
-        viewBtn.setOnAction(e -> toggleView());
-
         Button saveBtn = new Button("\uD83D\uDCBE");
         saveBtn.getStyleClass().addAll("top-icon-btn", "save-btn");
         saveBtn.setOnAction(e -> saveToDB());
@@ -147,7 +139,7 @@ public class GameGUI extends Application {
         });
 
         bar.getChildren().addAll(title, spacer, nameLabel, speciesLabel,
-            levelLabel, soundBtn, saveBtn, viewBtn, closeBtn);
+            levelLabel, soundBtn, saveBtn, closeBtn);
         return bar;
     }
 
@@ -156,12 +148,10 @@ public class GameGUI extends Application {
         centerPane.setMinSize(0, 0);
         centerPane.setPrefSize(W - 40, 360);
 
-        // Core eye tracking: look at the mouse location
+        // Eye tracking: pet sees mouse
         centerPane.setOnMouseMoved(e -> {
             if (sleeping) return;
-            if (use3D && pet3D != null) {
-                pet3D.lookAt(e.getX(), e.getY(), centerPane.getWidth(), centerPane.getHeight());
-            } else if (pet2D != null) {
+            if (pet2D != null) {
                 pet2D.lookAt(e.getX(), e.getY());
             }
         });
@@ -395,7 +385,7 @@ public class GameGUI extends Application {
     /* Feeding now handled directly via doAction("feed") with food cycling */
 
     private void doAction(String action) {
-        if (pet == null || (pet2D == null && pet3D == null)) return;
+        if (pet == null || pet2D == null) return;
 
         if (petSick && !action.equals("vitamin")) {
             showSpeech("Aku sakit... kasih vitamin dong! \uD83D\uDE22");
@@ -434,18 +424,14 @@ public class GameGUI extends Application {
                 totalFeeds++;
                 showSpeech("Nyam nyam enak! \uD83D\uDE0B");
                 sound.play("eat");
-                if (use3D && pet3D != null) {
-                    pet3D.setExpression("happy");
-                    pet3D.animateAction("feed");
-                } else if (pet2D != null) {
+                if (pet2D != null) {
                     pet2D.setExpression("happy");
                     pet2D.animateAction("feed");
                 }
                 new Thread(() -> {
                     try { Thread.sleep(1200); } catch (InterruptedException ignored) {}
                     Platform.runLater(() -> {
-                        if (use3D && pet3D != null) pet3D.setExpression("normal");
-                        else if (pet2D != null) pet2D.setExpression("normal");
+                        if (pet2D != null) pet2D.setExpression("normal");
                     });
                 }).start();
                 break;
@@ -461,18 +447,14 @@ public class GameGUI extends Application {
                 totalPlays++;
                 showSpeech("Yeay seru banget! \u2728");
                 sound.play("happy");
-                if (use3D && pet3D != null) {
-                    pet3D.setExpression("happy");
-                    pet3D.animateAction("play");
-                } else if (pet2D != null) {
+                if (pet2D != null) {
                     pet2D.setExpression("happy");
                     pet2D.animateAction("play");
                 }
                 new Thread(() -> {
                     try { Thread.sleep(1000); } catch (InterruptedException ignored) {}
                     Platform.runLater(() -> {
-                        if (use3D && pet3D != null) pet3D.setExpression("normal");
-                        else if (pet2D != null) pet2D.setExpression("normal");
+                        if (pet2D != null) pet2D.setExpression("normal");
                     });
                 }).start();
                 break;
@@ -480,11 +462,8 @@ public class GameGUI extends Application {
             case "bath":
                 if (pet instanceof Careable) {
                     ((Careable) pet).groom();
-                    sound.play("water");
-                    if (use3D && pet3D != null) {
-                        pet3D.setExpression("happy");
-                        pet3D.animateAction("bath");
-                    } else if (pet2D != null) {
+                sound.play("water");
+                    if (pet2D != null) {
                         pet2D.setExpression("happy");
                         pet2D.animateAction("bath");
                     }
@@ -497,10 +476,7 @@ public class GameGUI extends Application {
                 if (pet instanceof Careable) {
                     ((Careable) pet).giveVitamin();
                     sound.play("chime");
-                    if (use3D && pet3D != null) {
-                        pet3D.setExpression("happy");
-                        pet3D.animateAction("vitamin");
-                    } else if (pet2D != null) {
+                    if (pet2D != null) {
                         pet2D.setExpression("happy");
                         pet2D.animateAction("vitamin");
                     }
@@ -515,21 +491,14 @@ public class GameGUI extends Application {
                     showSpeech("Sudah bangun! Selamat pagi! \uD83D\uDE0A");
                     sleeping = false;
                     pet.setEnergy(Math.min(100, pet.getEnergy() + 10));
-                    if (use3D && pet3D != null) {
-                        pet3D.setExpression("normal");
-                        pet3D.restartIdle();
-                    } else if (pet2D != null) {
+                    if (pet2D != null) {
                         pet2D.setExpression("normal");
                         pet2D.restartIdle();
                     }
                 } else {
                     pet.sleep();
                     sleeping = true;
-                    if (use3D && pet3D != null) {
-                        pet3D.setExpression("sleepy");
-                        pet3D.stopIdle();
-                        pet3D.animateAction("sleep");
-                    } else if (pet2D != null) {
+                    if (pet2D != null) {
                         pet2D.setExpression("sleepy");
                         pet2D.stopIdle();
                         pet2D.animateAction("sleep");
@@ -721,18 +690,8 @@ public class GameGUI extends Application {
     }
 
     private void build2DPet(String species) {
-        // Remove 3D scene if exists
-        if (subScene3D != null) {
-            centerPane.getChildren().remove(subScene3D);
-            subScene3D = null;
-        }
-        if (pet3D != null) {
-            pet3D.stopIdle();
-            pet3D = null;
-        }
-        use3D = false;
-
         if (pet2D != null) {
+            pet2D.stopIdle();
             centerPane.getChildren().remove(pet2D);
         }
         pet2D = new Pet2D(species);
@@ -767,122 +726,9 @@ public class GameGUI extends Application {
             }
         });
 
-        // Petting for 3D mode via centerPane (not when rotating 3D model)
-        centerPane.setOnMouseDragged(ev -> {
-            if (sleeping || !use3D || ev.getTarget() == subScene3D) return;
-            if (Math.random() < 0.12) {
-                spawnFloatingIndicator("\uD83D\uDC95 Sayang!", ev.getSceneX(), ev.getSceneY() - 35, Color.web("#FF5E7E"));
-                sound.play("happy");
-                pet.setHappiness(Math.min(100, pet.getHappiness() + 3));
-                updateStatus();
-            }
-        });
-
-        // 3D mode click reaction (only when clicking the 3D scene, not overlays)
-        centerPane.setOnMouseClicked(ev -> {
-            if (sleeping || !use3D || pet3D == null) return;
-            if (ev.getTarget() != subScene3D) return;
-            pet3D.setExpression("happy");
-            if (Math.random() < 0.3) {
-                spawnFloatingIndicator("\u2728", ev.getSceneX(), ev.getSceneY() - 30, Color.web("#C490E4"));
-            }
-        });
-        
         centerPane.getChildren().add(pet2D);
         speechLabel.toFront();
         toastContainer.toFront();
-    }
-
-    private void toggleView() {
-        if (use3D) {
-            // Switch to 2D
-            use3D = false;
-            if (subScene3D != null) {
-                centerPane.getChildren().remove(subScene3D);
-                subScene3D = null;
-            }
-            if (pet2D != null) {
-                pet2D.setVisible(true);
-                if (pet3D != null) {
-                    pet3D.stopIdle();
-                }
-            }
-            showToast("Mode 2D");
-            if (pet != null) stage.setTitle("\uD83D\uDC3E " + pet.getName() + " (2D)");
-        } else {
-            // Switch to 3D
-            use3D = true;
-            if (pet2D != null) {
-                pet2D.setVisible(false);
-                pet2D.stopIdle();
-            }
-            if (pet3D == null && pet != null) {
-                build3DPet(pet.getSpecies());
-            }
-            if (pet3D != null && subScene3D == null) {
-                build3DScene();
-            }
-            if (subScene3D != null) {
-                subScene3D.setVisible(true);
-                centerPane.getChildren().add(subScene3D);
-                pet3D.restartIdle();
-            }
-            showToast("Mode 3D");
-            if (pet != null) stage.setTitle("\uD83D\uDC3E " + pet.getName() + " (3D)");
-            speechLabel.toFront();
-            toastContainer.toFront();
-        }
-    }
-
-    private void build3DPet(String species) {
-        pet3D = new Pet3D(species);
-    }
-
-    private void build3DScene() {
-        if (pet3D == null) return;
-
-        camera3D = new PerspectiveCamera(true);
-        camera3D.setNearClip(0.1);
-        camera3D.setFarClip(1000);
-        camera3D.setTranslateZ(-350);
-        camera3D.setTranslateY(-10);
-
-        Group root3D = pet3D.getRoot();
-        root3D.setScaleX(1.8);
-        root3D.setScaleY(1.8);
-        root3D.setScaleZ(1.8);
-
-        // Lighting
-        PointLight light = new PointLight(Color.WHITE);
-        light.setTranslateX(-100);
-        light.setTranslateY(-100);
-        light.setTranslateZ(-200);
-        root3D.getChildren().add(light);
-
-        PointLight light2 = new PointLight(Color.rgb(255, 200, 200));
-        light2.setTranslateX(100);
-        light2.setTranslateY(100);
-        light2.setTranslateZ(-200);
-        root3D.getChildren().add(light2);
-
-        subScene3D = new SubScene(root3D, centerPane.getWidth(), centerPane.getHeight(), true, SceneAntialiasing.BALANCED);
-        subScene3D.setCamera(camera3D);
-        subScene3D.setFill(Color.TRANSPARENT);
-
-        centerPane.widthProperty().addListener((obs, o, n) -> {
-            if (subScene3D != null) subScene3D.setWidth(n.doubleValue());
-        });
-        centerPane.heightProperty().addListener((obs, o, h) -> {
-            if (subScene3D != null) subScene3D.setHeight(h.doubleValue());
-        });
-
-        // Drag to rotate in 3D mode
-        subScene3D.setOnMouseDragged(ev -> {
-            if (pet3D != null) {
-                pet3D.getYRotate().setAngle(pet3D.getYRotate().getAngle() - ev.getX() * 0.3);
-                pet3D.getXRotate().setAngle(Math.max(-20, Math.min(20, pet3D.getXRotate().getAngle() + ev.getY() * 0.2)));
-            }
-        });
     }
 
     private void loadFromDB() {
@@ -1045,19 +891,15 @@ public class GameGUI extends Application {
                 if (speechCooldownTicks > 0) speechCooldownTicks--;
                 if (pet.getHealth() <= 0) {
                     if (speechCooldownTicks == 0) showSpeech("Sakit... tolong aku! \uD83D\uDE22");
-                    if (use3D && pet3D != null) pet3D.setExpression("sad");
-                    else if (pet2D != null) pet2D.setExpression("sad");
+                    if (pet2D != null) pet2D.setExpression("sad");
                 } else if (pet.getHunger() >= 80) {
                     if (speechCooldownTicks == 0) showSpeech("Laper... minta makan dong! \uD83D\uDE22");
-                    if (use3D && pet3D != null) pet3D.setExpression("sad");
-                    else if (pet2D != null) pet2D.setExpression("sad");
+                    if (pet2D != null) pet2D.setExpression("sad");
                 } else if (pet.getHappiness() <= 25) {
                     if (speechCooldownTicks == 0) showSpeech("Bosan... ajak main dong! \uD83D\uDE1E");
-                    if (use3D && pet3D != null) pet3D.setExpression("sad");
-                    else if (pet2D != null) pet2D.setExpression("sad");
+                    if (pet2D != null) pet2D.setExpression("sad");
                 } else {
-                    if (use3D && pet3D != null) pet3D.setExpression("normal");
-                    else if (pet2D != null) pet2D.setExpression("normal");
+                    if (pet2D != null) pet2D.setExpression("normal");
                 }
             }
 

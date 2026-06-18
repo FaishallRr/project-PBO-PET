@@ -33,7 +33,7 @@ public class Bird extends Pet implements Careable {
     @Override
     public void giveVitamin() {
         System.out.println("?? " + name + " dikasih vitamin. Sayapnya jadi lebih kuat!");
-        this.health = Math.min(100, this.health + 15);
+        setHealth(this.health + 15);
     }
 
     @Override
@@ -45,5 +45,6 @@ public class Bird extends Pet implements Careable {
         }
         setEnergy(this.energy - 5);
         setHappiness(this.happiness - 4);
+        applyHungerHealthPenalty();
     }
 }

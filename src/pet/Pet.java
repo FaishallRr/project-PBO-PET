@@ -22,7 +22,7 @@ public abstract class Pet {
         this.hunger = clamp(hunger, 0, 100);
     }
 
-    private void applyHungerHealthPenalty() {
+    protected void applyHungerHealthPenalty() {
         if (this.hunger >= 90) {
             this.health = Math.max(0, this.health - 10);
         }
