@@ -1,0 +1,227 @@
+.root {
+    -fx-font-family: 'Segoe UI', 'Arial', sans-serif;
+    -fx-font-size: 14px;
+}
+
+.top-bar {
+    -fx-background-color: rgba(255, 255, 255, 0.65);
+    -fx-border-width: 0 0 1 0;
+    -fx-border-color: rgba(200, 160, 228, 0.3);
+    -fx-padding: 10 24;
+    -fx-effect: dropshadow(gaussian, rgba(200,160,228,0.2), 12, 0, 0, 2);
+}
+
+.title-label {
+    -fx-font-size: 26px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #C490E4;
+    -fx-effect: dropshadow(gaussian, rgba(196,144,228,0.5), 12, 0.5, 0, 0);
+}
+
+.pet-name-label {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #FF8FAB;
+}
+
+.species-label {
+    -fx-font-size: 15px;
+    -fx-text-fill: #B8A0CC;
+}
+
+.level-badge {
+    -fx-background-color: linear-gradient(to right, #FF8FAB, #C490E4);
+    -fx-background-radius: 20;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+    -fx-padding: 5 16;
+    -fx-effect: dropshadow(gaussian, rgba(255,143,171,0.4), 10, 0.3, 0, 0);
+}
+
+.top-icon-btn {
+    -fx-background-color: rgba(196,144,228,0.12);
+    -fx-background-radius: 12;
+    -fx-border-color: rgba(196,144,228,0.2);
+    -fx-border-width: 1;
+    -fx-border-radius: 12;
+    -fx-text-fill: #8B6BAA;
+    -fx-font-size: 18px;
+    -fx-cursor: hand;
+    -fx-padding: 7 12;
+    -fx-min-width: 40;
+    -fx-min-height: 36;
+}
+
+.top-icon-btn:hover {
+    -fx-background-color: rgba(196,144,228,0.25);
+    -fx-text-fill: #6B4B8A;
+}
+
+.sound-btn:hover {
+    -fx-background-color: rgba(137,207,240,0.35);
+}
+
+.save-btn:hover {
+    -fx-background-color: rgba(119,221,119,0.35);
+}
+
+.close-btn:hover {
+    -fx-background-color: rgba(255,143,171,0.35);
+    -fx-text-fill: #FF6B8A;
+}
+
+.speech-bubble {
+    -fx-background-color: rgba(255, 255, 255, 0.95);
+    -fx-background-radius: 18;
+    -fx-padding: 12 20;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #4A3B5C;
+    -fx-border-color: rgba(255,143,171,0.3);
+    -fx-border-width: 2;
+    -fx-border-radius: 18;
+    -fx-effect: dropshadow(gaussian, rgba(196,144,228,0.3), 14, 0.3, 0, 4);
+}
+
+.status-panel {
+    -fx-background-color: rgba(255,255,255,0.55);
+    -fx-background-radius: 18;
+    -fx-padding: 14 22;
+    -fx-border-color: rgba(200,160,228,0.2);
+    -fx-border-width: 1;
+    -fx-border-radius: 18;
+    -fx-effect: dropshadow(gaussian, rgba(196,144,228,0.15), 10, 0, 0, 2);
+}
+
+.status-label {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #6B5B7B;
+}
+
+.status-value {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #8B6BAA;
+    -fx-min-width: 42;
+}
+
+.action-btn {
+    -fx-min-width: 76;
+    -fx-min-height: 76;
+    -fx-max-width: 76;
+    -fx-max-height: 76;
+    -fx-background-radius: 38;
+    -fx-border-radius: 38;
+    -fx-border-width: 2.5;
+    -fx-text-fill: white;
+    -fx-font-size: 30px;
+    -fx-cursor: hand;
+    -fx-padding: 0;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 10, 0, 0, 4);
+}
+
+.action-btn:hover {
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.25), 18, 0, 0, 6);
+    -fx-scale-x: 1.08;
+    -fx-scale-y: 1.08;
+}
+
+.action-btn:pressed {
+    -fx-scale-x: 0.94;
+    -fx-scale-y: 0.94;
+}
+
+.action-label {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #7B6B8A;
+    -fx-padding: 4 0 0 0;
+}
+
+.toast {
+    -fx-background-color: rgba(255,255,255,0.92);
+    -fx-background-radius: 14;
+    -fx-padding: 10 18;
+    -fx-text-fill: #4A3B5C;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-border-color: rgba(200,160,228,0.25);
+    -fx-border-width: 1;
+    -fx-border-radius: 14;
+    -fx-effect: dropshadow(gaussian, rgba(196,144,228,0.25), 12, 0, 0, 4);
+}
+
+.create-form {
+    -fx-background-color: rgba(255,255,255,0.75);
+    -fx-background-radius: 24;
+    -fx-border-radius: 24;
+    -fx-border-color: rgba(200,160,228,0.2);
+    -fx-border-width: 2;
+    -fx-padding: 36;
+    -fx-effect: dropshadow(gaussian, rgba(196,144,228,0.3), 22, 0, 0, 6);
+}
+
+.name-field {
+    -fx-background-color: rgba(255,255,255,0.8);
+    -fx-text-fill: #4A3B5C;
+    -fx-prompt-text-fill: rgba(139,107,170,0.5);
+    -fx-background-radius: 14;
+    -fx-border-radius: 14;
+    -fx-border-color: rgba(200,160,228,0.3);
+    -fx-border-width: 2;
+    -fx-padding: 12 18;
+    -fx-font-size: 17px;
+}
+
+.name-field:focused {
+    -fx-border-color: #C490E4;
+    -fx-background-color: rgba(255,255,255,0.95);
+}
+
+.species-btn {
+    -fx-background-color: rgba(255,255,255,0.6);
+    -fx-text-fill: #4A3B5C;
+    -fx-font-size: 15px;
+    -fx-background-radius: 16;
+    -fx-padding: 14 22;
+    -fx-cursor: hand;
+    -fx-border-color: transparent;
+    -fx-border-width: 2.5;
+    -fx-border-radius: 16;
+}
+
+.species-btn.selected {
+    -fx-background-color: rgba(196,144,228,0.25);
+    -fx-border-color: #C490E4;
+}
+
+.species-btn:hover {
+    -fx-background-color: rgba(255,143,171,0.15);
+}
+
+.create-btn {
+    -fx-background-color: linear-gradient(to right, #FF8FAB, #C490E4);
+    -fx-text-fill: white;
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 18;
+    -fx-padding: 14 48;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(255,143,171,0.4), 14, 0.3, 0, 0);
+}
+
+.create-btn:hover {
+    -fx-background-color: linear-gradient(to right, #FF6B8A, #A870D4);
+    -fx-effect: dropshadow(gaussian, rgba(255,143,171,0.6), 20, 0.4, 0, 0);
+}
+
+.create-btn:pressed {
+    -fx-scale-x: 0.97;
+    -fx-scale-y: 0.97;
+}
+
+.view-btn:hover {
+    -fx-background-color: rgba(137,207,240,0.35);
+}

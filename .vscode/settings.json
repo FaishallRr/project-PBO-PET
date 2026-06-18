@@ -1,0 +1,21 @@
+{
+    "java.project.sourcePaths": ["src"],
+    "java.project.referencedLibraries": [
+        "lib/mysql-connector-j-9.7.0.jar",
+        "D:\\openjfx-26.0.1_windows-x64_bin-sdk\\javafx-sdk-26.0.1\\lib\\javafx.base.jar",
+        "D:\\openjfx-26.0.1_windows-x64_bin-sdk\\javafx-sdk-26.0.1\\lib\\javafx.controls.jar",
+        "D:\\openjfx-26.0.1_windows-x64_bin-sdk\\javafx-sdk-26.0.1\\lib\\javafx.graphics.jar",
+        "D:\\openjfx-26.0.1_windows-x64_bin-sdk\\javafx-sdk-26.0.1\\lib\\javafx.media.jar",
+        "D:\\openjfx-26.0.1_windows-x64_bin-sdk\\javafx-sdk-26.0.1\\lib\\javafx.fxml.jar",
+        "D:\\openjfx-26.0.1_windows-x64_bin-sdk\\javafx-sdk-26.0.1\\lib\\javafx.web.jar",
+        "D:\\openjfx-26.0.1_windows-x64_bin-sdk\\javafx-sdk-26.0.1\\lib\\javafx.swing.jar",
+        "D:\\openjfx-26.0.1_windows-x64_bin-sdk\\javafx-sdk-26.0.1\\lib\\javafx-swt.jar"
+    ],
+    "java.configuration.runtimes": [
+        {
+            "name": "JavaSE-26",
+            "path": "C:\\Program Files\\Java\\jdk-26.0.1",
+            "default": true
+        }
+    ]
+}

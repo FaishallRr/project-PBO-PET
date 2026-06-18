@@ -1,0 +1,17 @@
+CREATE DATABASE IF NOT EXISTS pet_simulator;
+USE pet_simulator;
+
+CREATE TABLE IF NOT EXISTS pet_save (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    pet_name VARCHAR(50) NOT NULL,
+    species VARCHAR(20) NOT NULL,
+    hunger INT DEFAULT 50,
+    happiness INT DEFAULT 50,
+    energy INT DEFAULT 50,
+    health INT DEFAULT 100,
+    level INT DEFAULT 1,
+    total_feeds INT DEFAULT 0,
+    total_plays INT DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);

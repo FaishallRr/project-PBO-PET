@@ -1,6 +1,6 @@
 package pet;
 
-public class Pet {
+public abstract class Pet {
 
     protected String name;
     protected int hunger, happiness, energy, health;
@@ -8,51 +8,56 @@ public class Pet {
     public Pet(String name, int hunger, int happiness, int energy) {
         this.name = name;
         this.health = 100;
-        setHunger(hunger);
-        setHappiness(happiness);
-        setEnergy(energy);
+        this.hunger = clamp(hunger, 0, 100);
+        this.happiness = clamp(happiness, 0, 100);
+        this.energy = clamp(energy, 0, 100);
+        if (this.hunger >= 90) this.health = Math.max(0, this.health - 10);
+    }
+
+    protected int clamp(int val, int min, int max) {
+        return Math.max(min, Math.min(max, val));
     }
 
     public void setHunger(int hunger) {
-        if (hunger < 0) this.hunger = 0;
-        else if (hunger > 100) this.hunger = 100;
-        else this.hunger = hunger;
-        
-        if (this.hunger >= 90) this.health -= 10;
+        this.hunger = clamp(hunger, 0, 100);
+    }
+
+    private void applyHungerHealthPenalty() {
+        if (this.hunger >= 90) {
+            this.health = Math.max(0, this.health - 10);
+        }
     }
 
     public void setHappiness(int happiness) {
-        if (happiness < 0) this.happiness = 0;
-        else if (happiness > 100) this.happiness = 100;
-        else this.happiness = happiness;
+        this.happiness = clamp(happiness, 0, 100);
     }
 
     public void setEnergy(int energy) {
-        if (energy < 0) this.energy = 0;
-        else if (energy > 100) this.energy = 100;
-        else this.energy = energy;
+        this.energy = clamp(energy, 0, 100);
+    }
+
+    public void setHealth(int health) {
+        this.health = clamp(health, 0, 100);
     }
 
     public void feed(Food food) {
         if (this.hunger < 20) {
-            System.out.println("❌ " + name + " merasa MUAL! Perutnya sudah sangat kenyang (" + this.hunger + "%). Dia menolak makan " + food.getName() + ".");
+            System.out.println("? " + name + " merasa MUAL! Perutnya sudah sangat kenyang (" + this.hunger + "%). Dia menolak makan " + food.getName() + ".");
             return; 
         }
         
-        int nutrisiMasuk = food.getNutritionValue();
+        int nutrisiMasuk = food.getHungerReduction();
+        int bonusHappy = food.getHappinessBoost();
         int pemulihanHealth = 0;
 
         if (this.hunger == 100) {
             nutrisiMasuk = nutrisiMasuk * 2; 
             pemulihanHealth = 10; 
-            System.out.println("⚠️ " + name + " KELAPARAN EKSTREM (100%)! Dia melahap " + food.getName() + " dengan sangat rakus!");
-            System.out.println("💡 Efek Makan Rakus: Kelaparan berkurang drastis (Nutrisi efektif: +" + nutrisiMasuk + "%)");
+            System.out.println("?? " + name + " KELAPARAN EKSTREM (100%)! Dia melahap " + food.getName() + " dengan sangat rakus!");
+            System.out.println("?? Efek Makan Rakus: Kelaparan berkurang drastis (Nutrisi efektif: +" + nutrisiMasuk + "%)");
         } else if (this.hunger < 40) {
-            nutrisiMasuk = nutrisiMasuk / 2; 
-            if (nutrisiMasuk < 1) nutrisiMasuk = 1;
-            pemulihanHealth = nutrisiMasuk / 2;
-            if (pemulihanHealth < 1) pemulihanHealth = 1;
-            System.out.println(name + " mulai kenyang. Memakan " + food.getName() + " pelan-pelan (Nutrisi efektif: +" + nutrisiMasuk + "%)");
+            pemulihanHealth = 1;
+            System.out.println(name + " mulai kenyang. Memakan " + food.getName() + " pelan-pelan");
         } else {
             pemulihanHealth = nutrisiMasuk / 2; 
             if (pemulihanHealth < 1) pemulihanHealth = 1;
@@ -60,39 +65,51 @@ public class Pet {
         }
 
         setHunger(this.hunger - nutrisiMasuk);
-        this.health += pemulihanHealth;
-        if (this.health > 100) this.health = 100;
+        setHappiness(this.happiness + bonusHappy);
         
-        System.out.println("❤️ Health " + name + " bertambah +" + pemulihanHealth + " HP.");
-        timePasses();
+        if (this.health <= 0) {
+            this.health = Math.min(100, pemulihanHealth + 5);
+            System.out.println("?? " + name + " mulai pulih berkat makanan! (HP +" + (pemulihanHealth + 5) + ")");
+        } else {
+            this.health = Math.min(100, this.health + pemulihanHealth);
+        }
+        
+        System.out.println("?? Health " + name + " bertambah +" + pemulihanHealth + " HP.");
+        if (bonusHappy > 0) {
+            System.out.println("? " + name + " menyukai rasa makanannya! (Happiness +" + bonusHappy + ")");
+        }
     }
 
-    public void play() {
-        // Akan diisi oleh masing-masing hewan
-    }
-
-    public void makeSound() {
-        System.out.println(name + " mengeluarkan suara.");
-    }
+    public abstract void play();
+    public abstract void makeSound();
+    public abstract String getSpecies();
 
     public void sleep() {
         System.out.println(name + " sedang tidur...");
-        setEnergy(this.energy + 30);
-        timePasses();
     }
 
-        protected void timePasses() {
-            this.hunger += 10;
-            this.happiness -= 5;
-            this.energy -= 5;
-        }
+    protected void timePasses() {
+        int newHunger = clamp(this.hunger + 10, 0, 100);
+        int newHappiness = clamp(this.happiness - 5, 0, 100);
+        int newEnergy = clamp(this.energy - 5, 0, 100);
+        this.hunger = newHunger;
+        this.happiness = newHappiness;
+        this.energy = newEnergy;
+        applyHungerHealthPenalty();
+    }
+
+    public String getName() { return name; }
+    public int getHunger() { return hunger; }
+    public int getHappiness() { return happiness; }
+    public int getEnergy() { return energy; }
+    public int getHealth() { return health; }
 
     public void showStatus() {
-        System.out.println("\n--- STATUS " + name.toUpperCase() + " ---");
+        System.out.println("\n--- STATUS " + name.toUpperCase() + " (" + getSpecies() + ") ---");
         System.out.println("Hunger    : " + hunger + "% " + getBar(hunger)); 
         System.out.println("Happiness : " + happiness + " " + getBar(happiness));
         System.out.println("Energy    : " + energy + " " + getBar(energy));
-        System.out.println("Health    : " + health);
+        System.out.println("Health    : " + health + " HP");
     }
 
     private String getBar(int value) {
