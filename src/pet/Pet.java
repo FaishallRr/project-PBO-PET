@@ -4,10 +4,14 @@ public abstract class Pet {
 
     protected String name;
     protected int hunger, happiness, energy, health;
+    protected int age;
+    protected int coins;
 
     public Pet(String name, int hunger, int happiness, int energy) {
         this.name = name;
         this.health = 100;
+        this.age = 0;
+        this.coins = 0;
         this.hunger = clamp(hunger, 0, 100);
         this.happiness = clamp(happiness, 0, 100);
         this.energy = clamp(energy, 0, 100);
@@ -103,6 +107,11 @@ public abstract class Pet {
     public int getHappiness() { return happiness; }
     public int getEnergy() { return energy; }
     public int getHealth() { return health; }
+    public int getAge() { return age; }
+    public void setAge(int age) { this.age = Math.max(0, age); }
+    public int getCoins() { return coins; }
+    public void setCoins(int coins) { this.coins = Math.max(0, coins); }
+    public void addCoins(int amount) { this.coins = Math.max(0, this.coins + amount); }
 
     public void showStatus() {
         System.out.println("\n--- STATUS " + name.toUpperCase() + " (" + getSpecies() + ") ---");

@@ -6,10 +6,8 @@ import javafx.geometry.*;
 import javafx.scene.*;
 import javafx.scene.control.*;
 import javafx.scene.effect.DropShadow;
-
 import javafx.scene.layout.*;
 import javafx.scene.paint.*;
-import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
@@ -18,8 +16,7 @@ import javafx.animation.*;
 import javafx.util.Duration;
 import pet.DatabaseManager.PetSaveData;
 import java.util.Random;
-
-import java.sql.*;
+import java.util.*;
 
 public class GameGUI extends Application {
 
@@ -29,18 +26,25 @@ public class GameGUI extends Application {
     private Pet2D pet2D;
     private DatabaseManager db;
     private SoundManager sound;
+    private FileSaveManager fileSave;
     private boolean soundEnabled = true;
 
     private int petId = -1, level = 1, totalFeeds = 0, totalPlays = 0;
-    private int currentFoodType = 0;
     private boolean petSick = false;
     private boolean soundAvailable = true;
-    private double mx, my;
+
+    private String owner = "Player";
+    private List<PetSaveData> petList = new ArrayList<>();
+    private int currentPetIndex = -1;
+    private int coins = 0;
+    private int age = 0;
+    private int dryFoodStock, wetFoodStock, treatStock, vitaminStock;
 
     private Label nameLabel, speciesLabel, levelLabel, speechLabel;
+    private Label coinLabel, ageLabel;
     private Label hungerVal, happinessVal, energyVal, healthVal;
     private Rectangle hungerFill, happinessFill, energyFill, healthFill;
-    private Button soundBtn;
+    private Button soundBtn, shopBtn, leaderboardBtn, prevPetBtn, nextPetBtn, newPetBtn, miniGameBtn;
     private boolean sleeping = false;
 
     private Timeline gameLoop, saveTimer, speechFadeTimer;
@@ -48,13 +52,19 @@ public class GameGUI extends Application {
     private int speechCooldownTicks = 0;
 
     private Pane centerPane;
+    private BorderPane root;
     private Stage stage;
     private VBox toastContainer;
+    private VBox createForm;
+    private Pane currentOverlay;
+
+
 
     @Override
     public void start(Stage stage) {
         db = DatabaseManager.getInstance();
         sound = SoundManager.getInstance();
+        fileSave = new FileSaveManager();
         soundAvailable = sound.hasSounds();
         if (!soundAvailable) System.out.println("[Game] Sound folder kosong, efek suara nonaktif");
 
@@ -70,6 +80,7 @@ public class GameGUI extends Application {
         root.setCenter(buildCenter());
         root.setBottom(buildBottom());
 
+        this.root = root;
         this.stage = stage;
         Scene scene = new Scene(root, W, H);
         scene.getStylesheets().add("file:styles.css");
@@ -80,11 +91,22 @@ public class GameGUI extends Application {
                 case DIGIT3: doAction("bath"); break;
                 case DIGIT4: doAction("vitamin"); break;
                 case DIGIT5: doAction("sleep"); break;
+                default: break;
             }
         });
 
         if (db.isConnected()) {
-            loadFromDB();
+            petList = db.getPetsByOwner(owner);
+        }
+        if (petList.isEmpty()) {
+            List<PetSaveData> filePets = fileSave.load();
+            if (!filePets.isEmpty()) {
+                petList = filePets;
+            }
+        }
+
+        if (!petList.isEmpty()) {
+            switchToPet(0);
         } else {
             showCreateScreen();
         }
@@ -100,24 +122,43 @@ public class GameGUI extends Application {
     }
 
     private Node buildTopBar(Stage stage) {
-        HBox bar = new HBox(10);
+        HBox bar = new HBox(8);
         bar.getStyleClass().add("top-bar");
         bar.setAlignment(Pos.CENTER_LEFT);
+        bar.setPadding(new Insets(8, 16, 8, 16));
 
-        Label title = new Label("\uD83D\uDC3E Simulasi Pet 2D Modern");
+        Label title = new Label("\uD83D\uDC3E Pet Simulator");
         title.getStyleClass().add("title-label");
 
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
+        prevPetBtn = new Button("\u25C0");
+        prevPetBtn.getStyleClass().add("nav-btn");
+        prevPetBtn.setOnAction(e -> switchPet(-1));
+        prevPetBtn.setDisable(true);
 
         nameLabel = new Label("--");
         nameLabel.getStyleClass().add("pet-name-label");
 
+        nextPetBtn = new Button("\u25B6");
+        nextPetBtn.getStyleClass().add("nav-btn");
+        nextPetBtn.setOnAction(e -> switchPet(1));
+        nextPetBtn.setDisable(true);
+
         speciesLabel = new Label("");
         speciesLabel.getStyleClass().add("species-label");
 
+        ageLabel = new Label("");
+        ageLabel.getStyleClass().add("age-label");
+
         levelLabel = new Label("Lv.1");
         levelLabel.getStyleClass().add("level-badge");
+
+        coinLabel = new Label("\uD83E\uDE99 0");
+        coinLabel.getStyleClass().add("coin-label");
+
+        miniGameBtn = makeFeatureBtn("\uD83C\uDFAE", "Mini Game", "#89CFF0", () -> showOverlay("minigame", this::showMiniGame));
+        shopBtn = makeFeatureBtn("\uD83D\uDED2", "Shop", "#FFB347", () -> showOverlay("shop", this::showShop));
+        leaderboardBtn = makeFeatureBtn("\uD83C\uDFC6", "Leaderboard", "#C490E4", () -> showOverlay("leaderboard", this::showLeaderboard));
+        newPetBtn = makeFeatureBtn("\u2795", "Pet Baru", "#77DD77", this::showCreateScreen);
 
         soundBtn = new Button("\uD83D\uDD0A");
         soundBtn.getStyleClass().addAll("top-icon-btn", "sound-btn");
@@ -135,20 +176,39 @@ public class GameGUI extends Application {
         closeBtn.getStyleClass().addAll("top-icon-btn", "close-btn");
         closeBtn.setOnAction(e -> {
             saveToDB();
+            fileSave.save(petList);
             stage.close();
         });
 
-        bar.getChildren().addAll(title, spacer, nameLabel, speciesLabel,
-            levelLabel, soundBtn, saveBtn, closeBtn);
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        bar.getChildren().addAll(title, spacer,
+            prevPetBtn, nameLabel, nextPetBtn, speciesLabel,
+            ageLabel, levelLabel, coinLabel,
+            miniGameBtn, shopBtn, leaderboardBtn, newPetBtn,
+            soundBtn, saveBtn, closeBtn);
         return bar;
+    }
+
+    private Button makeFeatureBtn(String emoji, String tooltip, String color, Runnable action) {
+        Button btn = new Button(emoji);
+        btn.getStyleClass().add("feature-btn");
+        btn.setStyle("-fx-background-color: " + color + "30; -fx-border-color: " + color + "60;");
+        Tooltip tp = new Tooltip(tooltip);
+        tp.setShowDelay(Duration.millis(400));
+        Tooltip.install(btn, tp);
+        btn.setOnAction(e -> action.run());
+        btn.setOnMouseEntered(e -> btn.setStyle("-fx-background-color: " + color + "70; -fx-border-color: " + color + ";"));
+        btn.setOnMouseExited(e -> btn.setStyle("-fx-background-color: " + color + "30; -fx-border-color: " + color + "60;"));
+        return btn;
     }
 
     private Node buildCenter() {
         centerPane = new Pane();
         centerPane.setMinSize(0, 0);
-        centerPane.setPrefSize(W - 40, 360);
+        centerPane.setPrefSize(W - 40, 340);
 
-        // Eye tracking: pet sees mouse
         centerPane.setOnMouseMoved(e -> {
             if (sleeping) return;
             if (pet2D != null) {
@@ -173,8 +233,6 @@ public class GameGUI extends Application {
             centerPane.heightProperty().subtract(toastContainer.heightProperty()).subtract(16));
 
         centerPane.getChildren().addAll(speechLabel, toastContainer);
-
-        // Ensure UI overlays always render on top of pet
         speechLabel.toFront();
         toastContainer.toFront();
 
@@ -185,20 +243,19 @@ public class GameGUI extends Application {
 
     private void addBackgroundDecorations() {
         String[] emojis = {"\u2601\uFE0F", "\u2B50", "\uD83D\uDCAB", "\uD83C\uDF38", "\uD83D\uDC95", "\u2728"};
-        java.util.Random rng = new java.util.Random();
+        Random rng = new Random();
         for (int i = 0; i < 8; i++) {
             Label deco = new Label(emojis[rng.nextInt(emojis.length)]);
             deco.setStyle("-fx-font-size: " + (16 + rng.nextInt(18)) + "px; -fx-opacity: " + (0.15 + rng.nextDouble() * 0.2) + ";");
             deco.setManaged(false);
             deco.setMouseTransparent(true);
             double startX = rng.nextDouble() * 900;
-            double startY = rng.nextDouble() * 400;
+            double startY = rng.nextDouble() * 350;
             deco.setLayoutX(startX);
             deco.setLayoutY(startY);
 
             Timeline floatAnim = new Timeline(
-                new KeyFrame(Duration.ZERO,
-                    new KeyValue(deco.layoutYProperty(), startY)),
+                new KeyFrame(Duration.ZERO, new KeyValue(deco.layoutYProperty(), startY)),
                 new KeyFrame(Duration.seconds(8 + rng.nextDouble() * 10),
                     new KeyValue(deco.layoutYProperty(), startY - 100 - rng.nextDouble() * 200, Interpolator.EASE_BOTH))
             );
@@ -207,8 +264,7 @@ public class GameGUI extends Application {
             floatAnim.play();
 
             Timeline swayAnim = new Timeline(
-                new KeyFrame(Duration.ZERO,
-                    new KeyValue(deco.layoutXProperty(), startX)),
+                new KeyFrame(Duration.ZERO, new KeyValue(deco.layoutXProperty(), startX)),
                 new KeyFrame(Duration.seconds(6 + rng.nextDouble() * 8),
                     new KeyValue(deco.layoutXProperty(), startX + 30 - rng.nextDouble() * 60, Interpolator.EASE_BOTH))
             );
@@ -221,8 +277,8 @@ public class GameGUI extends Application {
     }
 
     private Node buildBottom() {
-        VBox box = new VBox(10);
-        box.setPadding(new Insets(10, 20, 15, 20));
+        VBox box = new VBox(8);
+        box.setPadding(new Insets(8, 20, 12, 20));
         box.setAlignment(Pos.CENTER);
 
         HBox statusBox = new HBox(12);
@@ -350,6 +406,98 @@ public class GameGUI extends Application {
         return box;
     }
 
+    private void showFeedMenu() {
+        if (pet == null || pet2D == null) return;
+        if (pet.getHunger() < 20) {
+            showSpeech("Aduh perutku kenyang banget! \uD83D\uDE2D");
+            showToast("Perut penuh! Tunggu lapar dulu.");
+            sound.play("sad");
+            return;
+        }
+        if (currentOverlay != null) {
+            root.getChildren().remove(currentOverlay);
+            currentOverlay = null;
+        }
+        double pw = root.getWidth() < 100 ? W : root.getWidth();
+        double ph = root.getHeight() < 100 ? H : root.getHeight();
+        Pane overlay = new Pane();
+        overlay.setPrefSize(pw, ph);
+        overlay.setPickOnBounds(false);
+        Rectangle bg = new Rectangle(pw, ph, Color.rgb(0, 0, 0, 0.45));
+        bg.setMouseTransparent(true);
+        overlay.getChildren().add(bg);
+        VBox card = new VBox(14);
+        card.getStyleClass().add("overlay-card");
+        card.setMaxWidth(340);
+        card.setAlignment(Pos.CENTER);
+        card.setPadding(new Insets(24));
+        card.setLayoutX((pw - 340) / 2);
+        card.setLayoutY((ph - 360) / 2);
+        Label title = new Label("\uD83C\uDF56 Pilih Makanan");
+        title.getStyleClass().add("overlay-title");
+        VBox list = new VBox(10);
+        list.setAlignment(Pos.CENTER);
+        int[] stocks = {dryFoodStock, wetFoodStock, treatStock, vitaminStock};
+        String[] stockNames = {"Makanan Kering", "Makanan Basah", "Snack", "Vitamin"};
+        String[] stockEmojis = {"\uD83C\uDF5A", "\uD83E\uDD5B", "\uD83C\uDF6C", "\uD83D\uDC8A"};
+        for (int i = 0; i < stockNames.length; i++) {
+            int idx = i;
+            Button btn = new Button(stockEmojis[i] + "  " + stockNames[i] + "  (\u00D7" + stocks[i] + ")");
+            btn.setStyle("-fx-background-color: #A8E6CF; -fx-text-fill: #2D3436; -fx-font-size: 14px; -fx-padding: 10 24; -fx-background-radius: 12; -fx-cursor: hand;");
+            btn.setMaxWidth(260);
+            btn.setOnAction(e -> {
+                int[] curStocks = {dryFoodStock, wetFoodStock, treatStock, vitaminStock};
+                if (curStocks[idx] <= 0) {
+                    showToast("Stok " + stockNames[idx] + " habis! Beli di toko.");
+                    sound.play("sad");
+                    return;
+                }
+                currentOverlay = null;
+                root.getChildren().remove(overlay);
+                switch (idx) {
+                    case 0: dryFoodStock--; pet.feed(new DryFood("Makanan Kering")); break;
+                    case 1: wetFoodStock--; pet.feed(new WetFood("Makanan Basah")); break;
+                    case 2: treatStock--; pet.feed(new Treat("Snack")); break;
+                    case 3:
+                        vitaminStock--;
+                        if (pet instanceof Careable) {
+                            ((Careable) pet).giveVitamin();
+                            petSick = false;
+                        }
+                        break;
+                }
+                totalFeeds++;
+                pet.addCoins(1);
+                showSpeech("Nyam nyam enak! \uD83D\uDE0B");
+                sound.play("eat");
+                if (pet2D != null) {
+                    pet2D.setExpression("happy");
+                    pet2D.animateAction("feed");
+                }
+                new Thread(() -> {
+                    try { Thread.sleep(1200); } catch (InterruptedException ignored) {}
+                    Platform.runLater(() -> {
+                        if (pet2D != null) pet2D.setExpression("normal");
+                    });
+                }).start();
+                updateStatus();
+                saveToDB();
+            });
+            list.getChildren().add(btn);
+        }
+        Button closeBtn = new Button("Tutup");
+        closeBtn.setStyle("-fx-background-color: #FF6B6B; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 8 32; -fx-background-radius: 12; -fx-cursor: hand;");
+        closeBtn.setOnAction(e -> {
+            currentOverlay = null;
+            root.getChildren().remove(overlay);
+        });
+        card.getChildren().addAll(title, list, closeBtn);
+        overlay.getChildren().add(card);
+        currentOverlay = overlay;
+        root.getChildren().add(overlay);
+        overlay.toFront();
+    }
+
     private void showToast(String message) {
         Platform.runLater(() -> {
             Label toast = new Label(message);
@@ -379,11 +527,6 @@ public class GameGUI extends Application {
         });
     }
 
-    /* ================================================================
-     *  FEEDING (direct)
-     * ================================================================ */
-    /* Feeding now handled directly via doAction("feed") with food cycling */
-
     private void doAction(String action) {
         if (pet == null || pet2D == null) return;
 
@@ -406,34 +549,7 @@ public class GameGUI extends Application {
 
         switch (action) {
             case "feed":
-                if (pet.getHunger() < 20) {
-                    showSpeech("Aduh perutku kenyang banget! \uD83D\uDE2D");
-                    showToast("Perut penuh! Tunggu lapar dulu.");
-                    break;
-                }
-                Food selectedFood;
-                String foodName;
-                switch (currentFoodType) {
-                    case 0: selectedFood = new DryFood("Makanan Kering"); foodName = "\uD83C\uDF5A Makanan Kering"; break;
-                    case 1: selectedFood = new WetFood("Makanan Basah"); foodName = "\uD83E\uDD5B Makanan Basah"; break;
-                    default: selectedFood = new Treat("Snack"); foodName = "\uD83C\uDF6C Snack"; break;
-                }
-                currentFoodType = (currentFoodType + 1) % 3;
-                showToast(foodName + " \u2714\uFE0F");
-                pet.feed(selectedFood);
-                totalFeeds++;
-                showSpeech("Nyam nyam enak! \uD83D\uDE0B");
-                sound.play("eat");
-                if (pet2D != null) {
-                    pet2D.setExpression("happy");
-                    pet2D.animateAction("feed");
-                }
-                new Thread(() -> {
-                    try { Thread.sleep(1200); } catch (InterruptedException ignored) {}
-                    Platform.runLater(() -> {
-                        if (pet2D != null) pet2D.setExpression("normal");
-                    });
-                }).start();
+                showFeedMenu();
                 break;
 
             case "play":
@@ -442,9 +558,11 @@ public class GameGUI extends Application {
                 if (pet.getEnergy() == energyBefore) {
                     showSpeech("Capek... istirahat dulu ya! \uD83D\uDE34");
                     showToast("Energi terlalu rendah untuk bermain.");
+                    sound.play("sad");
                     return;
                 }
                 totalPlays++;
+                pet.addCoins(2);
                 showSpeech("Yeay seru banget! \u2728");
                 sound.play("happy");
                 if (pet2D != null) {
@@ -462,13 +580,16 @@ public class GameGUI extends Application {
             case "bath":
                 if (pet instanceof Careable) {
                     ((Careable) pet).groom();
-                sound.play("water");
+                    sound.play("water");
                     if (pet2D != null) {
                         pet2D.setExpression("happy");
                         pet2D.animateAction("bath");
                     }
                     showSpeech("Segar setelah mandi! \uD83D\uDEC1");
                     showToast("Sudah dimandikan. Senang bertambah!");
+                } else {
+                    sound.play("sad");
+                    showToast("Pet ini tidak bisa dimandikan!");
                 }
                 break;
 
@@ -483,6 +604,9 @@ public class GameGUI extends Application {
                     petSick = false;
                     showSpeech("Sehat dan kuat! \u2728");
                     showToast("Vitamin diberikan. Sehat bertambah!");
+                } else {
+                    sound.play("sad");
+                    showToast("Pet ini tidak bisa dikasih vitamin!");
                 }
                 break;
 
@@ -506,11 +630,13 @@ public class GameGUI extends Application {
                     sound.play("snore");
                     showSpeech("Selamat tidur... Zzz \uD83D\uDE34");
                     showToast("Pet tidur nyenyak. Energi bertambah!");
-                    spawnFloatingIndicator("\uD83D\uDCA4 Zzz\uD83D\uDCA4", centerPane.getWidth() / 2 - 60, centerPane.getHeight() / 2 - 100, Color.web("#C490E4"));
+                    spawnFloatingIndicator("\uD83D\uDCA4 Zzz\uD83D\uDCA4",
+                        centerPane.getWidth() / 2 - 60, centerPane.getHeight() / 2 - 100, Color.web("#C490E4"));
                 }
                 break;
         }
 
+        updateCoinsDisplay();
         updateStatus();
         saveToDB();
 
@@ -521,7 +647,7 @@ public class GameGUI extends Application {
 
         java.util.List<FloatingInfo> indicators = new java.util.ArrayList<>();
         if (diffHunger != 0) {
-            indicators.add(new FloatingInfo((diffHunger < 0 ? "": "+") + diffHunger + " Lapar", Color.web("#FFB347")));
+            indicators.add(new FloatingInfo((diffHunger < 0 ? "" : "+") + diffHunger + " Lapar", Color.web("#FFB347")));
         }
         if (diffHappiness != 0) {
             indicators.add(new FloatingInfo((diffHappiness > 0 ? "+" : "") + diffHappiness + " Senang", Color.web("#FF8FAB")));
@@ -558,18 +684,18 @@ public class GameGUI extends Application {
             Label label = new Label(text);
             label.setFont(Font.font("Segoe UI", FontWeight.BOLD, 22));
             label.setTextFill(textColor);
-            
+
             DropShadow ds = new DropShadow();
             ds.setOffsetY(2.0);
             ds.setColor(Color.color(0, 0, 0, 0.5));
             label.setEffect(ds);
-            
+
             label.setManaged(false);
             label.setLayoutX(startX - 55);
             label.setLayoutY(startY);
-            
+
             centerPane.getChildren().add(label);
-            
+
             Timeline animation = new Timeline(
                 new KeyFrame(Duration.ZERO,
                     new KeyValue(label.layoutYProperty(), startY),
@@ -608,6 +734,13 @@ public class GameGUI extends Application {
         );
         speechFadeTimer.setOnFinished(e -> { speechLabel.setVisible(false); speechLabel.setOpacity(1); });
         speechFadeTimer.play();
+    }
+
+    private void updateCoinsDisplay() {
+        if (pet != null) {
+            coins = pet.getCoins();
+            Platform.runLater(() -> coinLabel.setText("\uD83E\uDE99 " + coins));
+        }
     }
 
     private void updateStatus() {
@@ -668,6 +801,10 @@ public class GameGUI extends Application {
         soundBtn.setText(soundEnabled ? "\uD83D\uDD0A" : "\uD83D\uDD07");
     }
 
+    /* ================================================================
+     *  CREATE & SWITCH PETS
+     * ================================================================ */
+
     private void createPet(String name, String species) {
         switch (species.toLowerCase()) {
             case "kucing": pet = new Cat(name); break;
@@ -675,11 +812,19 @@ public class GameGUI extends Application {
             case "burung": pet = new Bird(name); break;
             default: pet = new Cat(name);
         }
+        age = 0;
+        level = 1;
+        totalFeeds = 0;
+        totalPlays = 0;
+        dryFoodStock = 0;
+        wetFoodStock = 0;
+        treatStock = 0;
+        vitaminStock = 0;
+        petSick = false;
+        sleeping = false;
+        petId = -1;
 
-        nameLabel.setText(pet.getName());
-        speciesLabel.setText(pet.getSpecies());
-        levelLabel.setText("Lv." + level);
-        updateStatus();
+        updateUI();
         stage.setTitle("\uD83D\uDC3E " + pet.getName() + " (" + pet.getSpecies() + ")");
         showToast("Pet baru lahir! Halo " + pet.getName() + "! \uD83C\uDF89");
         showSpeech("Hai! Namaku " + pet.getName() + "! \uD83D\uDE0A");
@@ -687,6 +832,10 @@ public class GameGUI extends Application {
 
         build2DPet(species);
         saveToDB();
+
+        petList = db.isConnected() ? db.getPetsByOwner(owner) : fileSave.load();
+        currentPetIndex = petList.size() - 1;
+        updatePetNavButtons();
     }
 
     private void build2DPet(String species) {
@@ -695,8 +844,14 @@ public class GameGUI extends Application {
             centerPane.getChildren().remove(pet2D);
         }
         pet2D = new Pet2D(species);
-        
-        // Center position with dynamic resize support
+
+        // Age-based scaling
+        double ageScale = 1.0;
+        if (age < 50) ageScale = 0.75;
+        else if (age > 200) ageScale = 0.85;
+        pet2D.setScaleX(ageScale);
+        pet2D.setScaleY(ageScale);
+
         Runnable centerPet2D = () -> {
             double pw = pet2D.prefWidth(-1);
             double ph = pet2D.prefHeight(-1);
@@ -706,18 +861,15 @@ public class GameGUI extends Application {
         centerPet2D.run();
         centerPane.widthProperty().addListener((obs, o, n) -> centerPet2D.run());
         centerPane.heightProperty().addListener((obs, o, h) -> centerPet2D.run());
-        
-        // Pet click → play species sound
+
         pet2D.setOnMouseClicked(ev -> {
             if (sleeping) return;
             pet.makeSound();
             sound.playSpeciesSound(pet.getSpecies());
         });
 
-        // Petting physics (Stroking mouse-drag over pet)
         pet2D.setOnMouseDragged(ev -> {
             if (sleeping) return;
-            // Spawn hearts, play happy sounds, increase happiness
             if (Math.random() < 0.12) {
                 spawnFloatingIndicator("\uD83D\uDC95 Sayang!", ev.getSceneX(), ev.getSceneY() - 35, Color.web("#FF5E7E"));
                 sound.play("happy");
@@ -731,158 +883,151 @@ public class GameGUI extends Application {
         toastContainer.toFront();
     }
 
-    private void loadFromDB() {
-        PetSaveData data = db.loadLatestPet();
-        if (data != null && data.petName != null) {
-            switch (data.species.toLowerCase()) {
-                case "kucing": pet = new Cat(data.petName); break;
-                case "anjing": pet = new Dog(data.petName); break;
-                case "burung": pet = new Bird(data.petName); break;
-                default: pet = new Cat(data.petName);
-            }
-            pet.setHunger(data.hunger);
-            pet.setHappiness(data.happiness);
-            pet.setEnergy(data.energy);
-            pet.setHealth(data.health);
-            petId = data.id;
-            level = data.level;
-            totalFeeds = data.totalFeeds;
-            totalPlays = data.totalPlays;
+    private void switchToPet(int index) {
+        if (index < 0 || index >= petList.size()) return;
 
+        saveToDB();
+
+        currentPetIndex = index;
+        PetSaveData data = petList.get(index);
+
+        switch (data.species.toLowerCase()) {
+            case "kucing": pet = new Cat(data.petName); break;
+            case "anjing": pet = new Dog(data.petName); break;
+            case "burung": pet = new Bird(data.petName); break;
+            default: pet = new Cat(data.petName);
+        }
+
+        pet.setHunger(data.hunger);
+        pet.setHappiness(data.happiness);
+        pet.setEnergy(data.energy);
+        pet.setHealth(data.health);
+        pet.setAge(data.age);
+        pet.setCoins(data.coins);
+        petId = data.id;
+        level = data.level;
+        totalFeeds = data.totalFeeds;
+        totalPlays = data.totalPlays;
+        coins = data.coins;
+        age = data.age;
+        dryFoodStock = data.dryFood;
+        wetFoodStock = data.wetFood;
+        treatStock = data.treat;
+        vitaminStock = data.vitamin;
+        sleeping = false;
+        petSick = (data.health <= 0);
+
+        updateUI();
+        build2DPet(data.species);
+        showSpeech("Bertemu lagi! \u2728");
+        showToast("Memuat " + pet.getName() + "...");
+    }
+
+    private void switchPet(int direction) {
+        int newIndex = currentPetIndex + direction;
+        if (newIndex >= 0 && newIndex < petList.size()) {
+            switchToPet(newIndex);
+        }
+    }
+
+    private void updateUI() {
+        if (pet == null) return;
+        Platform.runLater(() -> {
             nameLabel.setText(pet.getName());
             speciesLabel.setText(pet.getSpecies());
             levelLabel.setText("Lv." + level);
+            ageLabel.setText(getAgeLabel(age));
+            updateCoinsDisplay();
             updateStatus();
-            stage.setTitle("\uD83D\uDC3E " + pet.getName() + " (2D)");
-            showToast("Selamat datang kembali, " + pet.getName() + "!");
-            showToast("Level " + level + " | Sudah makan " + totalFeeds + " kali, bermain " + totalPlays + " kali");
-
-            build2DPet(data.species);
-            showSpeech("Aku kangen! \u2728");
-        } else {
-            showCreateScreen();
-        }
-    }
-
-    private void showCreateScreen() {
-        VBox form = new VBox(15);
-        form.setAlignment(Pos.CENTER);
-        form.setPadding(new Insets(40));
-        form.setMaxWidth(400);
-        form.getStyleClass().add("create-form");
-
-        Label welcome = new Label("\u2728 SELAMAT DATANG! \u2728");
-        welcome.setFont(Font.font("Segoe UI", FontWeight.BOLD, 30));
-        welcome.setTextFill(Color.web("#C490E4"));
-        welcome.setEffect(new DropShadow(15, Color.rgb(196, 144, 228, 0.6)));
-
-        Label sub = new Label("Pilih dan beri nama pet virtualmu!");
-        sub.setFont(Font.font("Segoe UI", 15));
-        sub.setTextFill(Color.web("#8B6BAA"));
-
-        TextField nameField = new TextField();
-        nameField.setPromptText("Ketik nama pet kamu...");
-        nameField.getStyleClass().add("name-field");
-
-        ToggleGroup speciesGroup = new ToggleGroup();
-        HBox speciesBox = new HBox(12);
-        speciesBox.setAlignment(Pos.CENTER);
-
-        ToggleButton catBtn = speciesBtn("\uD83D\uDC31\nKucing\nManis & Manja!", "Kucing", speciesGroup);
-        ToggleButton dogBtn = speciesBtn("\uD83D\uDC36\nAnjing\nSetia & Aktif!", "Anjing", speciesGroup);
-        ToggleButton birdBtn = speciesBtn("\uD83D\uDC26\nBurung\nCeria & Lincah!", "Burung", speciesGroup);
-
-        catBtn.setSelected(true);
-        speciesBox.getChildren().addAll(catBtn, dogBtn, birdBtn);
-
-        Button createBtn = new Button("\uD83C\uDF89 BUAT PET!");
-        createBtn.getStyleClass().add("create-btn");
-        createBtn.setOnAction(e -> {
-            String name = nameField.getText().trim();
-            if (name.isEmpty()) { nameField.setPromptText("Nama dulu dong! \uD83D\uDE0A"); return; }
-            if (name.length() > 50) { nameField.setText(name.substring(0, 50)); showToast("Nama dipotong ke 50 karakter"); }
-            String species = ((ToggleButton) speciesGroup.getSelectedToggle()).getUserData().toString();
-            centerPane.getChildren().remove(form);
-            createPet(name, species);
+            updatePetNavButtons();
         });
-
-        form.getChildren().addAll(welcome, sub, nameField, speciesBox, createBtn);
-        form.setTranslateX((centerPane.getWidth() - 400) / 2);
-        form.setTranslateY(30);
-
-        centerPane.widthProperty().addListener((obs, o, n) ->
-            form.setTranslateX((n.doubleValue() - 400) / 2));
-
-        centerPane.getChildren().add(form);
     }
 
-    private ToggleButton speciesBtn(String text, String name, ToggleGroup group) {
-        ToggleButton btn = new ToggleButton(text);
-        btn.setUserData(name);
-        btn.setToggleGroup(group);
-        btn.getStyleClass().add("species-btn");
-        btn.selectedProperty().addListener((obs, o, n) -> {
-            if (n) btn.getStyleClass().add("selected");
-            else btn.getStyleClass().remove("selected");
-        });
-        return btn;
+    private String getAgeLabel(int age) {
+        if (age < 50) return "\uD83D\uDC76 Baby";
+        else if (age < 200) return "\uD83D\uDC3E Adult";
+        else return "\uD83D\uDC34 Senior";
     }
+
+    private void updatePetNavButtons() {
+        prevPetBtn.setDisable(currentPetIndex <= 0);
+        nextPetBtn.setDisable(currentPetIndex >= petList.size() - 1);
+    }
+
+    /* ================================================================
+     *  SAVE / LOAD
+     * ================================================================ */
 
     private void saveToDB() {
-        if (pet == null || !db.isConnected()) return;
-        try {
-            if (petId < 0) {
-                String sql = "INSERT INTO pet_save (pet_name, species, hunger, happiness, energy, health, level, total_feeds, total_plays) VALUES (?,?,?,?,?,?,?,?,?)";
-                try (PreparedStatement ps = db.getConnection().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-                    ps.setString(1, pet.getName());
-                    ps.setString(2, pet.getSpecies());
-                    ps.setInt(3, pet.getHunger());
-                    ps.setInt(4, pet.getHappiness());
-                    ps.setInt(5, pet.getEnergy());
-                    ps.setInt(6, pet.getHealth());
-                    ps.setInt(7, level);
-                    ps.setInt(8, totalFeeds);
-                    ps.setInt(9, totalPlays);
-                    ps.executeUpdate();
-                    try (ResultSet rs = ps.getGeneratedKeys()) {
-                        if (rs.next()) petId = rs.getInt(1);
-                    }
-                }
-            } else {
-                String sql = "UPDATE pet_save SET hunger=?, happiness=?, energy=?, health=?, level=?, total_feeds=?, total_plays=?, updated_at=CURRENT_TIMESTAMP WHERE id=?";
-                try (PreparedStatement ps = db.getConnection().prepareStatement(sql)) {
-                    ps.setInt(1, pet.getHunger());
-                    ps.setInt(2, pet.getHappiness());
-                    ps.setInt(3, pet.getEnergy());
-                    ps.setInt(4, pet.getHealth());
-                    ps.setInt(5, level);
-                    ps.setInt(6, totalFeeds);
-                    ps.setInt(7, totalPlays);
-                    ps.setInt(8, petId);
-                    ps.executeUpdate();
-                }
+        if (pet == null) return;
+
+        PetSaveData data = new PetSaveData();
+        data.id = petId;
+        data.owner = owner;
+        data.petName = pet.getName();
+        data.species = pet.getSpecies();
+        data.age = age;
+        data.coins = pet.getCoins();
+        data.hunger = pet.getHunger();
+        data.happiness = pet.getHappiness();
+        data.energy = pet.getEnergy();
+        data.health = pet.getHealth();
+        data.level = level;
+        data.totalFeeds = totalFeeds;
+        data.totalPlays = totalPlays;
+        data.dryFood = dryFoodStock;
+        data.wetFood = wetFoodStock;
+        data.treat = treatStock;
+        data.vitamin = vitaminStock;
+
+        if (db.isConnected()) {
+            int newId = db.savePet(data);
+            if (petId < 0 && newId > 0) petId = newId;
+            data.id = petId;
+
+            // Update petList
+            if (currentPetIndex >= 0 && currentPetIndex < petList.size()) {
+                petList.set(currentPetIndex, data);
             }
-            showToast("Tersimpan! \uD83D\uDCBE");
-        } catch (SQLException e) {
-            showToast("Gagal menyimpan: " + e.getMessage());
         }
+
+        fileSave.save(petList);
     }
+
+    /* ================================================================
+     *  GAME LOOP
+     * ================================================================ */
 
     private void startGameLoop() {
         gameLoop = new Timeline(new KeyFrame(Duration.seconds(2), e -> {
             if (pet == null) return;
             tickCount++;
 
-            // Every 8 ticks (16 seconds), let stats decay via timePasses
             if (tickCount % 8 == 0 && !sleeping) {
                 pet.timePasses();
             }
 
-            // If sleeping, regain energy automatically
+            // Age progression
+            if (tickCount % 50 == 0) {
+                age++;
+                if (pet != null) {
+                    pet.setAge(age);
+                    Platform.runLater(() -> ageLabel.setText(getAgeLabel(age)));
+                    // Update visual scale
+                    if (pet2D != null) {
+                        double ageScale = 1.0;
+                        if (age < 50) ageScale = 0.75;
+                        else if (age > 200) ageScale = 0.85;
+                        pet2D.setScaleX(ageScale);
+                        pet2D.setScaleY(ageScale);
+                    }
+                }
+            }
+
             if (sleeping) {
                 if (tickCount % 4 == 0) {
                     pet.setEnergy(Math.min(100, pet.getEnergy() + 8));
-                    pet.setHunger(Math.min(100, pet.getHunger() + 2)); // hunger slowly decays (hunger increases)
+                    pet.setHunger(Math.min(100, pet.getHunger() + 2));
                     updateStatus();
                 }
             }
@@ -921,6 +1066,7 @@ public class GameGUI extends Application {
             }
 
             updateStatus();
+            updateCoinsDisplay();
 
             if (pet.getHealth() <= 0) {
                 showToast("\u26A0\uFE0F Kesehatan pet sangat rendah!");
@@ -932,15 +1078,669 @@ public class GameGUI extends Application {
 
     private void startAutoSave() {
         saveTimer = new Timeline(new KeyFrame(Duration.seconds(30), e -> {
-            if (pet != null) saveToDB();
+            if (pet != null) {
+                saveToDB();
+            }
         }));
         saveTimer.setCycleCount(Animation.INDEFINITE);
         saveTimer.play();
     }
 
+    /* ================================================================
+     *  CREATE SCREEN
+     * ================================================================ */
+
+    private void showCreateScreen() {
+        removeCreateForm();
+
+        VBox form = new VBox(15);
+        form.setAlignment(Pos.CENTER);
+        form.setPadding(new Insets(40));
+        form.setMaxWidth(420);
+        form.getStyleClass().add("create-form");
+        form.setTranslateX((centerPane.getWidth() - 420) / 2);
+        form.setTranslateY(20);
+
+        centerPane.widthProperty().addListener((obs, o, n) ->
+            form.setTranslateX((n.doubleValue() - 420) / 2));
+
+        Label welcome = new Label("\u2728 SELAMAT DATANG! \u2728");
+        welcome.setFont(Font.font("Segoe UI", FontWeight.BOLD, 28));
+        welcome.setTextFill(Color.web("#C490E4"));
+        welcome.setEffect(new DropShadow(15, Color.rgb(196, 144, 228, 0.6)));
+
+        Label sub = new Label("Pilih dan beri nama pet virtualmu!");
+        sub.setFont(Font.font("Segoe UI", 15));
+        sub.setTextFill(Color.web("#8B6BAA"));
+
+        TextField nameField = new TextField();
+        nameField.setPromptText("Nama pet kamu...");
+        nameField.getStyleClass().add("name-field");
+
+        TextField ownerField = new TextField();
+        ownerField.setPromptText("Nama kamu (untuk leaderboard)...");
+        ownerField.getStyleClass().add("name-field");
+        ownerField.setText(owner);
+
+        ToggleGroup speciesGroup = new ToggleGroup();
+        HBox speciesBox = new HBox(12);
+        speciesBox.setAlignment(Pos.CENTER);
+
+        ToggleButton catBtn = speciesBtn("\uD83D\uDC31\nKucing\nManis & Manja!", "Kucing", speciesGroup);
+        ToggleButton dogBtn = speciesBtn("\uD83D\uDC36\nAnjing\nSetia & Aktif!", "Anjing", speciesGroup);
+        ToggleButton birdBtn = speciesBtn("\uD83D\uDC26\nBurung\nCeria & Lincah!", "Burung", speciesGroup);
+
+        catBtn.setSelected(true);
+        speciesBox.getChildren().addAll(catBtn, dogBtn, birdBtn);
+
+        Button createBtn = new Button("\uD83C\uDF89 BUAT PET!");
+        createBtn.getStyleClass().add("create-btn");
+        createBtn.setOnAction(e -> {
+            String name = nameField.getText().trim();
+            if (name.isEmpty()) { nameField.setPromptText("Nama dulu dong! \uD83D\uDE0A"); return; }
+            if (name.length() > 50) { nameField.setText(name.substring(0, 50)); showToast("Nama dipotong ke 50 karakter"); }
+            owner = ownerField.getText().trim();
+            if (owner.isEmpty()) owner = "Player";
+            String species = ((ToggleButton) speciesGroup.getSelectedToggle()).getUserData().toString();
+            centerPane.getChildren().remove(form);
+            createPet(name, species);
+        });
+
+        form.getChildren().addAll(welcome, sub, nameField, ownerField, speciesBox, createBtn);
+
+        Label note = new Label("(Pastikan MySQL menyala agar tersimpan di leaderboard!)");
+        note.setFont(Font.font("Segoe UI", 12));
+        note.setTextFill(Color.web("#B8A0CC"));
+        form.getChildren().add(note);
+
+        centerPane.getChildren().add(form);
+        createForm = form;
+    }
+
+    private void removeCreateForm() {
+        if (createForm != null) {
+            centerPane.getChildren().remove(createForm);
+            createForm = null;
+        }
+    }
+
+    private ToggleButton speciesBtn(String text, String name, ToggleGroup group) {
+        ToggleButton btn = new ToggleButton(text);
+        btn.setUserData(name);
+        btn.setToggleGroup(group);
+        btn.getStyleClass().add("species-btn");
+        btn.selectedProperty().addListener((obs, o, n) -> {
+            if (n) btn.getStyleClass().add("selected");
+            else btn.getStyleClass().remove("selected");
+        });
+        return btn;
+    }
+
+    private void showOverlay(String type, Runnable showFn) {
+        if (currentOverlay != null) {
+            Object data = currentOverlay.getUserData();
+            if (data != null && data.equals(type)) {
+                root.getChildren().remove(currentOverlay);
+                currentOverlay = null;
+                return;
+            }
+            root.getChildren().remove(currentOverlay);
+            currentOverlay = null;
+        }
+        showFn.run();
+    }
+
+    /* ================================================================
+     *  MINI GAME
+     * ================================================================ */
+
+    private void showMiniGame() {
+        if (pet == null) return;
+        if (sleeping) {
+            showToast("Bangunkan pet dulu sebelum main game!");
+            return;
+        }
+
+        double pw = root.getWidth() < 100 ? W : root.getWidth();
+        double ph = root.getHeight() < 100 ? H : root.getHeight();
+
+        Pane overlay = new Pane();
+        overlay.setPrefSize(pw, ph);
+        overlay.setPickOnBounds(false);
+        Rectangle bg = new Rectangle(pw, ph, Color.rgb(0, 0, 0, 0.7));
+        bg.setMouseTransparent(true);
+        overlay.getChildren().add(bg);
+
+        Label titleLbl = new Label("\uD83C\uDFAE Reaction Clicker");
+        titleLbl.getStyleClass().add("overlay-title");
+        titleLbl.setStyle(titleLbl.getStyle() + ";-fx-text-fill: white;");
+        titleLbl.setLayoutX(pw / 2 - 80);
+        titleLbl.setLayoutY(20);
+
+        Label scoreLbl = new Label("Score: 0");
+        scoreLbl.getStyleClass().add("game-score-label");
+        scoreLbl.setLayoutX(30);
+        scoreLbl.setLayoutY(20);
+
+        Label timeLbl = new Label("Time: 20s");
+        timeLbl.getStyleClass().add("game-time-label");
+        timeLbl.setLayoutX(pw - 120);
+        timeLbl.setLayoutY(22);
+
+        Button target = new Button();
+        target.getStyleClass().add("game-target");
+        target.setVisible(false);
+
+        Button closeBtn = new Button("✖ Keluar");
+        closeBtn.getStyleClass().add("overlay-close-btn");
+        closeBtn.setLayoutX(20);
+        closeBtn.setLayoutY(ph - 55);
+
+        overlay.getChildren().addAll(titleLbl, scoreLbl, timeLbl, target, closeBtn);
+        overlay.setUserData("minigame");
+        currentOverlay = overlay;
+        root.getChildren().add(overlay);
+        overlay.toFront();
+
+        Random rng = new Random();
+        int[] score = {0};
+        int[] timeLeft = {20};
+        double gameW = pw - 100;
+        double gameH = ph - 120;
+
+        Timeline moveTimer = new Timeline(new KeyFrame(Duration.millis(1200), e -> {
+            double nx = 40 + rng.nextDouble() * gameW;
+            double ny = 60 + rng.nextDouble() * gameH;
+            target.setLayoutX(nx);
+            target.setLayoutY(ny);
+            target.setVisible(true);
+        }));
+        moveTimer.setCycleCount(Animation.INDEFINITE);
+
+        Timeline countdown = new Timeline();
+        countdown.getKeyFrames().add(new KeyFrame(Duration.seconds(1), e -> {
+            timeLeft[0]--;
+            timeLbl.setText("Time: " + timeLeft[0] + "s");
+            if (timeLeft[0] <= 0) {
+                countdown.stop();
+                moveTimer.stop();
+                target.setVisible(false);
+
+                int reward = score[0] * 3 + 5;
+                pet.addCoins(reward);
+                pet.setHappiness(Math.min(100, pet.getHappiness() + score[0] * 2));
+                updateCoinsDisplay();
+                updateStatus();
+                updateUI();
+
+                saveToDB();
+                showToast("\uD83C\uDF89 Game selesai! Score: " + score[0] + " | Reward: " + reward + " koin!");
+                sound.play("chime");
+
+                Label resultLbl = new Label("\uD83C\uDFC6 Selesai! Score: " + score[0] + " | +" + reward + " \uD83E\uDE99");
+                resultLbl.setFont(Font.font("Segoe UI", FontWeight.BOLD, 26));
+                resultLbl.setTextFill(Color.web("#FFD700"));
+                resultLbl.setLayoutX(pw / 2 - 180);
+                resultLbl.setLayoutY(ph / 2 - 20);
+                overlay.getChildren().add(resultLbl);
+
+                spawnFloatingIndicator("+" + reward + " Koin!", pw / 2 - 40, ph / 2 - 80, Color.web("#FFD700"));
+            }
+        }));
+        countdown.setCycleCount(20);
+
+        target.setOnAction(e -> {
+            score[0]++;
+            scoreLbl.setText("Score: " + score[0]);
+            sound.play("click");
+            target.setVisible(false);
+
+            double newRate = Math.max(300, 1200 - score[0] * 50);
+            moveTimer.stop();
+            moveTimer.getKeyFrames().clear();
+            moveTimer.getKeyFrames().add(
+                new KeyFrame(Duration.millis(newRate), ev -> {
+                    double nx = 40 + rng.nextDouble() * gameW;
+                    double ny = 60 + rng.nextDouble() * gameH;
+                    target.setLayoutX(nx);
+                    target.setLayoutY(ny);
+                    target.setVisible(true);
+                })
+            );
+            moveTimer.play();
+        });
+
+        closeBtn.setOnAction(e -> {
+            countdown.stop();
+            moveTimer.stop();
+            currentOverlay = null;
+            root.getChildren().remove(overlay);
+        });
+
+        moveTimer.play();
+        countdown.play();
+    }
+
+    /* ================================================================
+     *  SHOP
+     * ================================================================ */
+
+    private void showShop() {
+        if (pet == null) return;
+
+        double pw = root.getWidth() < 100 ? W : root.getWidth();
+        double ph = root.getHeight() < 100 ? H : root.getHeight();
+
+        Pane overlay = new Pane();
+        overlay.setPrefSize(pw, ph);
+        overlay.setPickOnBounds(false);
+        Rectangle bg = new Rectangle(pw, ph, Color.rgb(0, 0, 0, 0.55));
+        bg.setMouseTransparent(true);
+        overlay.getChildren().add(bg);
+
+        VBox card = new VBox(16);
+        card.getStyleClass().add("overlay-card");
+        card.setMaxWidth(480);
+        card.setAlignment(Pos.CENTER);
+        card.setLayoutX((pw - 480) / 2);
+        card.setLayoutY((ph - 400) / 2);
+
+        HBox header = new HBox();
+        header.setAlignment(Pos.CENTER_LEFT);
+        Label title = new Label("\uD83D\uDED2 TOKO");
+        title.getStyleClass().add("overlay-title");
+        Region sp = new Region();
+        HBox.setHgrow(sp, Priority.ALWAYS);
+        Label coinDisplay = new Label("\uD83E\uDE99 " + pet.getCoins());
+        coinDisplay.getStyleClass().add("coin-label");
+        coinDisplay.setStyle(coinDisplay.getStyle() + "; -fx-font-size: 16px;");
+        header.getChildren().addAll(title, sp, coinDisplay);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(12);
+        grid.setVgap(12);
+        grid.setAlignment(Pos.CENTER);
+
+        String[] shopEmojis = {"\uD83C\uDF5A", "\uD83E\uDD5B", "\uD83C\uDF6C", "\uD83D\uDC8A"};
+        String[] itemNames = {"Makanan Kering", "Makanan Basah", "Snack", "Vitamin"};
+        int[] itemPrices = {5, 10, 7, 15};
+        String[] itemInfos = {"Lapar -10\nSenang +2", "Lapar -25\nSenang +8", "Lapar -5\nSenang +15", "Sehat +15\n(Vitamin)"};
+
+        for (int i = 0; i < 4; i++) {
+            int idx = i;
+            VBox itemCard = new VBox(8);
+            itemCard.getStyleClass().add("shop-item");
+            itemCard.setAlignment(Pos.CENTER);
+
+            Label emojiLbl = new Label(shopEmojis[i]);
+            emojiLbl.setFont(Font.font("Segoe UI", 36));
+
+            Label nameLbl = new Label(itemNames[i]);
+            nameLbl.setFont(Font.font("Segoe UI", FontWeight.BOLD, 14));
+            nameLbl.setTextFill(Color.web("#4A3B5C"));
+
+            Label infoLbl = new Label(itemInfos[i]);
+            infoLbl.setFont(Font.font("Segoe UI", 11));
+            infoLbl.setTextFill(Color.web("#8B6BAA"));
+
+            Label priceLbl = new Label("\uD83E\uDE99 " + itemPrices[i]);
+            priceLbl.setFont(Font.font("Segoe UI", FontWeight.BOLD, 14));
+            priceLbl.setTextFill(Color.web("#D4A017"));
+
+            Button buyBtn = new Button("Beli");
+            buyBtn.getStyleClass().add("shop-buy-btn");
+
+            buyBtn.setOnAction(e -> {
+                if (pet.getCoins() < itemPrices[idx]) {
+                    showToast("Koin tidak cukup! Butuh " + itemPrices[idx] + " koin!");
+                    sound.play("sad");
+                    return;
+                }
+                pet.addCoins(-itemPrices[idx]);
+                updateCoinsDisplay();
+                coinDisplay.setText("\uD83E\uDE99 " + pet.getCoins());
+
+                switch (idx) {
+                    case 0: dryFoodStock++; break;
+                    case 1: wetFoodStock++; break;
+                    case 2: treatStock++; break;
+                    case 3: vitaminStock++; break;
+                }
+                updateStatus();
+                sound.play("chime");
+                showToast("Berhasil membeli " + itemNames[idx] + "! \u2705");
+                saveToDB();
+            });
+
+            itemCard.getChildren().addAll(emojiLbl, nameLbl, infoLbl, priceLbl, buyBtn);
+            grid.add(itemCard, i % 2, i / 2);
+        }
+
+        HBox btnRow = new HBox();
+        btnRow.setAlignment(Pos.CENTER);
+        Button closeBtn = new Button("Tutup");
+        closeBtn.getStyleClass().add("overlay-close-btn");
+        closeBtn.setOnAction(e -> {
+            currentOverlay = null;
+            root.getChildren().remove(overlay);
+        });
+        btnRow.getChildren().add(closeBtn);
+
+        card.getChildren().addAll(header, grid, btnRow);
+        overlay.getChildren().add(card);
+        overlay.setUserData("shop");
+        currentOverlay = overlay;
+        root.getChildren().add(overlay);
+        overlay.toFront();
+    }
+
+    /* ================================================================
+     *  LEADERBOARD
+     * ================================================================ */
+
+    private void showLeaderboard() {
+        double pw = root.getWidth() < 100 ? W : root.getWidth();
+        double ph = root.getHeight() < 100 ? H : root.getHeight();
+
+        Pane overlay = new Pane();
+        overlay.setPrefSize(pw, ph);
+        overlay.setPickOnBounds(false);
+        Rectangle bg = new Rectangle(pw, ph, Color.rgb(0, 0, 0, 0.55));
+        bg.setMouseTransparent(true);
+        overlay.getChildren().add(bg);
+
+        VBox card = new VBox(12);
+        card.getStyleClass().add("overlay-card");
+        card.setMaxWidth(520);
+        card.setMaxHeight(450);
+        card.setAlignment(Pos.TOP_CENTER);
+        card.setLayoutX((pw - 520) / 2);
+        card.setLayoutY((ph - 450) / 2);
+
+        HBox header = new HBox();
+        header.setAlignment(Pos.CENTER_LEFT);
+        Label title = new Label("\uD83C\uDFC6 LEADERBOARD");
+        title.getStyleClass().add("overlay-title");
+        Region sp = new Region();
+        HBox.setHgrow(sp, Priority.ALWAYS);
+        Button closeBtn = new Button("Tutup");
+        closeBtn.getStyleClass().add("overlay-close-btn");
+        closeBtn.setOnAction(e -> {
+            currentOverlay = null;
+            root.getChildren().remove(overlay);
+        });
+        header.getChildren().addAll(title, sp, closeBtn);
+
+        VBox listBox = new VBox(6);
+        listBox.setPadding(new Insets(8, 0, 0, 0));
+        ScrollPane scroll = new ScrollPane(listBox);
+        scroll.setFitToWidth(true);
+        scroll.setStyle("-fx-background: transparent; -fx-background-color: transparent;");
+        scroll.setPrefHeight(320);
+
+        List<PetSaveData> lb = db.isConnected() ? db.getLeaderboard() : new ArrayList<>();
+
+        if (lb.isEmpty()) {
+            Label emptyLbl = new Label("Belum ada data leaderboard.\nPastikan MySQL menyala!");
+            emptyLbl.setFont(Font.font("Segoe UI", 14));
+            emptyLbl.setTextFill(Color.web("#B8A0CC"));
+            emptyLbl.setAlignment(Pos.CENTER);
+            listBox.getChildren().add(emptyLbl);
+        } else {
+            int maxRank = Math.min(20, lb.size());
+            for (int i = 0; i < maxRank; i++) {
+                PetSaveData d = lb.get(i);
+                int rank = i + 1;
+
+                HBox row = new HBox(10);
+                row.getStyleClass().add("lb-row");
+                row.setAlignment(Pos.CENTER_LEFT);
+
+                String medal = rank == 1 ? "\uD83E\uDD47" : rank == 2 ? "\uD83E\uDD48" : rank == 3 ? "\uD83E\uDD49" : "#" + rank;
+                Label rankLbl = new Label(medal);
+                rankLbl.getStyleClass().add("lb-rank");
+
+                VBox info = new VBox(2);
+                Label nameLbl = new Label(d.petName + " (" + d.species + ")");
+                nameLbl.getStyleClass().add("lb-name");
+                Label details = new Label(d.owner + "  \u2022  Lv." + d.level + "  \u2022  \uD83E\uDE99" + d.coins + "  \u2022  " + getAgeLabel(d.age));
+                details.getStyleClass().add("lb-detail");
+                info.getChildren().addAll(nameLbl, details);
+
+                Region spacer2 = new Region();
+                HBox.setHgrow(spacer2, Priority.ALWAYS);
+
+                Button giftBtn = new Button("\uD83C\uDF81");
+                giftBtn.setStyle("-fx-background-color: rgba(255,143,171,0.2); -fx-background-radius: 8; -fx-cursor: hand; -fx-font-size: 16px; -fx-padding: 4 8;");
+                Tooltip.install(giftBtn, new Tooltip("Kirim hadiah"));
+                Button gbBtn = new Button("\uD83D\uDCDD");
+                gbBtn.setStyle("-fx-background-color: rgba(137,207,240,0.2); -fx-background-radius: 8; -fx-cursor: hand; -fx-font-size: 16px; -fx-padding: 4 8;");
+                Tooltip.install(gbBtn, new Tooltip("Guestbook"));
+
+                int finalPetId = d.id;
+                String toOwner = d.owner;
+                String toPetName = d.petName;
+
+                giftBtn.setOnAction(e -> {
+                    currentOverlay = null;
+                    root.getChildren().remove(overlay);
+                    sendGift(toOwner, toPetName);
+                });
+                gbBtn.setOnAction(e -> {
+                    currentOverlay = null;
+                    root.getChildren().remove(overlay);
+                    showGuestbook(finalPetId, toPetName);
+                });
+
+                row.getChildren().addAll(rankLbl, info, spacer2, giftBtn, gbBtn);
+                listBox.getChildren().add(row);
+            }
+        }
+
+        Button refreshBtn = new Button("\uD83D\uDD04 Refresh");
+        refreshBtn.setStyle("-fx-background-color: rgba(196,144,228,0.2); -fx-background-radius: 10; -fx-cursor: hand; -fx-padding: 6 18; -fx-text-fill: #8B6BAA; -fx-font-size: 13px; -fx-border-color: rgba(196,144,228,0.3); -fx-border-radius: 10;");
+        refreshBtn.setOnAction(e -> {
+            currentOverlay = null;
+            root.getChildren().remove(overlay);
+            showLeaderboard();
+        });
+
+        card.getChildren().addAll(header, scroll, refreshBtn);
+        overlay.getChildren().add(card);
+        overlay.setUserData("leaderboard");
+        currentOverlay = overlay;
+        root.getChildren().add(overlay);
+        overlay.toFront();
+    }
+
+    private void sendGift(String toOwner, String toPetName) {
+        if (pet == null) return;
+        if (!db.isConnected()) {
+            showToast("Koneksi database diperlukan untuk kirim hadiah!");
+            return;
+        }
+
+        if (!db.canSendGiftToday(owner, toOwner, toPetName)) {
+            showToast("Sudah kirim hadiah ke " + toPetName + " hari ini!");
+            sound.play("sad");
+            return;
+        }
+
+        double pw = root.getWidth() < 100 ? W : root.getWidth();
+        double ph = root.getHeight() < 100 ? H : root.getHeight();
+
+        Pane overlay = new Pane();
+        overlay.setPrefSize(pw, ph);
+        overlay.setPickOnBounds(false);
+        Rectangle bg = new Rectangle(pw, ph, Color.rgb(0, 0, 0, 0.6));
+        bg.setMouseTransparent(true);
+        overlay.getChildren().add(bg);
+
+        VBox card = new VBox(16);
+        card.getStyleClass().add("overlay-card");
+        card.setMaxWidth(360);
+        card.setAlignment(Pos.CENTER);
+        card.setPadding(new Insets(30));
+        card.setLayoutX((pw - 360) / 2);
+        card.setLayoutY((ph - 280) / 2);
+
+        Label title = new Label("\uD83C\uDF81 Kirim Hadiah");
+        title.getStyleClass().add("overlay-title");
+
+        Label info = new Label("Kirim hadiah untuk " + toPetName + "!");
+        info.setFont(Font.font("Segoe UI", 14));
+        info.setTextFill(Color.web("#8B6BAA"));
+
+        HBox btnBox = new HBox(16);
+        btnBox.setAlignment(Pos.CENTER);
+
+        Button snackBtn = new Button("\uD83C\uDF6C Snack (+5 Senang)");
+        snackBtn.setStyle("-fx-background-color: rgba(255,143,171,0.25); -fx-background-radius: 12; -fx-padding: 10 16; -fx-cursor: hand; -fx-border-color: #FF8FAB; -fx-border-radius: 12; -fx-text-fill: #4A3B5C; -fx-font-size: 13px;");
+
+        Button vitaminBtn = new Button("\uD83D\uDC8A Vitamin (+5 Sehat)");
+        vitaminBtn.setStyle("-fx-background-color: rgba(119,221,119,0.25); -fx-background-radius: 12; -fx-padding: 10 16; -fx-cursor: hand; -fx-border-color: #77DD77; -fx-border-radius: 12; -fx-text-fill: #4A3B5C; -fx-font-size: 13px;");
+
+        Button closeBtn = new Button("Batal");
+        closeBtn.getStyleClass().add("overlay-close-btn");
+
+        javafx.event.EventHandler<javafx.event.ActionEvent> sendHandler = e -> {
+            String giftType = e.getSource() == snackBtn ? "snack" : "vitamin";
+            db.sendGift(owner, toOwner, toPetName, giftType);
+            currentOverlay = null;
+            root.getChildren().remove(overlay);
+            showToast("\u2705 Hadiah terkirim ke " + toPetName + "!");
+            sound.play("chime");
+            showLeaderboard();
+        };
+
+        snackBtn.setOnAction(sendHandler);
+        vitaminBtn.setOnAction(sendHandler);
+        closeBtn.setOnAction(e -> {
+            currentOverlay = null;
+            root.getChildren().remove(overlay);
+            showLeaderboard();
+        });
+
+        btnBox.getChildren().addAll(snackBtn, vitaminBtn);
+        card.getChildren().addAll(title, info, btnBox, closeBtn);
+        overlay.getChildren().add(card);
+        currentOverlay = overlay;
+        root.getChildren().add(overlay);
+        overlay.toFront();
+    }
+
+    /* ================================================================
+     *  GUESTBOOK
+     * ================================================================ */
+
+    private void showGuestbook(int petId, String petName) {
+        double pw = root.getWidth() < 100 ? W : root.getWidth();
+        double ph = root.getHeight() < 100 ? H : root.getHeight();
+
+        Pane overlay = new Pane();
+        overlay.setPrefSize(pw, ph);
+        overlay.setPickOnBounds(false);
+        Rectangle bg = new Rectangle(pw, ph, Color.rgb(0, 0, 0, 0.55));
+        bg.setMouseTransparent(true);
+        overlay.getChildren().add(bg);
+
+        VBox card = new VBox(12);
+        card.getStyleClass().add("overlay-card");
+        card.setMaxWidth(460);
+        card.setMaxHeight(420);
+        card.setAlignment(Pos.TOP_CENTER);
+        card.setPadding(new Insets(20));
+        card.setLayoutX((pw - 460) / 2);
+        card.setLayoutY((ph - 420) / 2);
+
+        HBox header = new HBox();
+        header.setAlignment(Pos.CENTER_LEFT);
+        Label title = new Label("\uD83D\uDCDD Guestbook - " + petName);
+        title.getStyleClass().add("overlay-title");
+        title.setStyle(title.getStyle() + "; -fx-font-size: 18px;");
+        Region sp = new Region();
+        HBox.setHgrow(sp, Priority.ALWAYS);
+        Button closeBtn = new Button("Tutup");
+        closeBtn.getStyleClass().add("overlay-close-btn");
+        closeBtn.setOnAction(e -> {
+            currentOverlay = null;
+            root.getChildren().remove(overlay);
+            showLeaderboard();
+        });
+        header.getChildren().addAll(title, sp, closeBtn);
+
+        TextField msgField = new TextField();
+        msgField.setPromptText("Tulis pesan untuk " + petName + "...");
+        msgField.getStyleClass().add("name-field");
+
+        Button sendBtn = new Button("\u2709\uFE0F Kirim");
+        sendBtn.setStyle("-fx-background-color: linear-gradient(to right, #C490E4, #89CFF0); -fx-text-fill: white; -fx-background-radius: 12; -fx-padding: 8 20; -fx-cursor: hand; -fx-font-weight: bold;");
+
+        HBox inputRow = new HBox(8);
+        inputRow.setAlignment(Pos.CENTER);
+        HBox.setHgrow(msgField, Priority.ALWAYS);
+        inputRow.getChildren().addAll(msgField, sendBtn);
+
+        VBox msgBox = new VBox(6);
+        ScrollPane scroll = new ScrollPane(msgBox);
+        scroll.setFitToWidth(true);
+        scroll.setStyle("-fx-background: transparent; -fx-background-color: transparent;");
+        scroll.setPrefHeight(240);
+
+        // Load messages
+        List<String[]> messages = db.isConnected() ? db.getGuestbook(petId) : new ArrayList<>();
+        if (messages.isEmpty()) {
+            Label emptyLbl = new Label("Belum ada pesan. Jadilah yang pertama!");
+            emptyLbl.setFont(Font.font("Segoe UI", 13));
+            emptyLbl.setTextFill(Color.web("#B8A0CC"));
+            emptyLbl.setAlignment(Pos.CENTER);
+            msgBox.getChildren().add(emptyLbl);
+        } else {
+            for (String[] msg : messages) {
+                VBox entry = new VBox(2);
+                entry.getStyleClass().add("gb-entry");
+                Label visitor = new Label(msg[0]);
+                visitor.getStyleClass().add("gb-visitor");
+                Label text = new Label(msg[1]);
+                text.getStyleClass().add("gb-message");
+                text.setWrapText(true);
+                Label date = new Label(msg[2]);
+                date.getStyleClass().add("gb-date");
+                entry.getChildren().addAll(visitor, text, date);
+                msgBox.getChildren().add(entry);
+            }
+        }
+
+        sendBtn.setOnAction(e -> {
+            String msg = msgField.getText().trim();
+            if (msg.isEmpty()) return;
+            if (db.isConnected()) {
+                db.addGuestbookEntry(petId, owner, msg);
+            }
+            msgField.clear();
+            currentOverlay = null;
+            root.getChildren().remove(overlay);
+            showToast("Pesan terkirim! \u2705");
+            sound.play("chime");
+
+            showGuestbook(petId, petName);
+        });
+
+        card.getChildren().addAll(header, inputRow, scroll);
+        overlay.getChildren().add(card);
+        currentOverlay = overlay;
+        root.getChildren().add(overlay);
+        overlay.toFront();
+    }
+
+    /* ================================================================
+     *  CLEANUP
+     * ================================================================ */
+
     @Override
     public void stop() {
         saveToDB();
+        fileSave.save(petList);
         if (db != null) db.close();
     }
 
@@ -948,10 +1748,3 @@ public class GameGUI extends Application {
         launch(args);
     }
 }
-
-
-
-
-
-
-

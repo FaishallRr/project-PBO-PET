@@ -3,7 +3,7 @@ title Pet Simulator 3D
 chcp 65001 >nul
 
 set JAVAFX_PATH=D:\openjfx-26.0.1_windows-x64_bin-sdk\javafx-sdk-26.0.1
-set MYSQL_JAR=D:\MyProject\project-PBO-PET - Copy\lib\mysql-connector-j-9.7.0.jar
+set MYSQL_JAR=lib\mysql-connector-j-9.7.0.jar
 set SRC=src\pet\*.java
 set BIN=bin
 set MODULES=javafx.controls,javafx.graphics,javafx.media,javafx.fxml,javafx.base

@@ -1,7 +1,7 @@
 package pet;
 
 public class WetFood extends Food {
-    public WetFood(String name) { super(name); }
+    public WetFood(String name) { super(name); price = 10; }
 
     @Override
     public int getHungerReduction() { return 25; }

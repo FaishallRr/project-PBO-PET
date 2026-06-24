@@ -3,8 +3,11 @@ USE pet_simulator;
 
 CREATE TABLE IF NOT EXISTS pet_save (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    owner VARCHAR(50) DEFAULT 'Player',
     pet_name VARCHAR(50) NOT NULL,
     species VARCHAR(20) NOT NULL,
+    age INT DEFAULT 0,
+    coins INT DEFAULT 0,
     hunger INT DEFAULT 50,
     happiness INT DEFAULT 50,
     energy INT DEFAULT 50,
@@ -14,4 +17,21 @@ CREATE TABLE IF NOT EXISTS pet_save (
     total_plays INT DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS gifts (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    from_owner VARCHAR(50) NOT NULL,
+    to_owner VARCHAR(50) NOT NULL,
+    to_pet_name VARCHAR(50) NOT NULL,
+    gift_type VARCHAR(30) NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS guestbook (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    pet_id INT NOT NULL,
+    visitor_owner VARCHAR(50) NOT NULL,
+    message TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );

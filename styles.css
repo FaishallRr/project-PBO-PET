@@ -12,7 +12,7 @@
 }
 
 .title-label {
-    -fx-font-size: 26px;
+    -fx-font-size: 24px;
     -fx-font-weight: bold;
     -fx-text-fill: #C490E4;
     -fx-effect: dropshadow(gaussian, rgba(196,144,228,0.5), 12, 0.5, 0, 0);
@@ -22,11 +22,35 @@
     -fx-font-size: 20px;
     -fx-font-weight: bold;
     -fx-text-fill: #FF8FAB;
+    -fx-min-width: 50;
+    -fx-alignment: center;
 }
 
 .species-label {
-    -fx-font-size: 15px;
+    -fx-font-size: 14px;
     -fx-text-fill: #B8A0CC;
+    -fx-padding: 0 4;
+}
+
+.age-label {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #8B6BAA;
+    -fx-background-color: rgba(196,144,228,0.15);
+    -fx-background-radius: 10;
+    -fx-padding: 3 10;
+}
+
+.coin-label {
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #D4A017;
+    -fx-background-color: rgba(255,215,0,0.12);
+    -fx-background-radius: 10;
+    -fx-padding: 3 10;
+    -fx-border-color: rgba(212,160,23,0.2);
+    -fx-border-radius: 10;
+    -fx-border-width: 1;
 }
 
 .level-badge {
@@ -37,6 +61,41 @@
     -fx-font-size: 14px;
     -fx-padding: 5 16;
     -fx-effect: dropshadow(gaussian, rgba(255,143,171,0.4), 10, 0.3, 0, 0);
+}
+
+.nav-btn {
+    -fx-background-color: rgba(196,144,228,0.12);
+    -fx-background-radius: 10;
+    -fx-border-color: rgba(196,144,228,0.2);
+    -fx-border-width: 1;
+    -fx-border-radius: 10;
+    -fx-text-fill: #8B6BAA;
+    -fx-font-size: 14px;
+    -fx-cursor: hand;
+    -fx-padding: 4 8;
+    -fx-min-width: 28;
+    -fx-min-height: 28;
+}
+
+.nav-btn:hover {
+    -fx-background-color: rgba(196,144,228,0.25);
+}
+
+.nav-btn:disabled {
+    -fx-opacity: 0.3;
+    -fx-cursor: default;
+}
+
+.feature-btn {
+    -fx-min-width: 36;
+    -fx-min-height: 36;
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+    -fx-border-width: 1.5;
+    -fx-font-size: 18px;
+    -fx-cursor: hand;
+    -fx-padding: 0;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 6, 0, 0, 2);
 }
 
 .top-icon-btn {
@@ -222,6 +281,171 @@
     -fx-scale-y: 0.97;
 }
 
-.view-btn:hover {
-    -fx-background-color: rgba(137,207,240,0.35);
+/* Overlay styles */
+.overlay-bg {
+    -fx-background-color: rgba(0, 0, 0, 0.55);
+}
+
+.overlay-card {
+    -fx-background-color: rgba(255, 255, 255, 0.95);
+    -fx-background-radius: 24;
+    -fx-border-radius: 24;
+    -fx-padding: 24;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 30, 0, 0, 8);
+}
+
+.overlay-title {
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #4A3B5C;
+}
+
+.overlay-close-btn {
+    -fx-background-color: rgba(255,143,171,0.2);
+    -fx-background-radius: 12;
+    -fx-border-color: rgba(255,143,171,0.3);
+    -fx-border-radius: 12;
+    -fx-border-width: 1;
+    -fx-text-fill: #FF6B8A;
+    -fx-font-size: 18px;
+    -fx-cursor: hand;
+    -fx-padding: 6 14;
+    -fx-font-weight: bold;
+}
+
+.overlay-close-btn:hover {
+    -fx-background-color: rgba(255,143,171,0.4);
+}
+
+/* Shop */
+.shop-item {
+    -fx-background-color: rgba(255,255,255,0.8);
+    -fx-background-radius: 16;
+    -fx-border-color: rgba(200,160,228,0.2);
+    -fx-border-width: 1.5;
+    -fx-border-radius: 16;
+    -fx-padding: 16;
+    -fx-alignment: center;
+    -fx-min-width: 130;
+    -fx-min-height: 150;
+    -fx-effect: dropshadow(gaussian, rgba(196,144,228,0.1), 8, 0, 0, 2);
+}
+
+.shop-item:hover {
+    -fx-border-color: #C490E4;
+    -fx-background-color: rgba(196,144,228,0.08);
+}
+
+.shop-buy-btn {
+    -fx-background-color: linear-gradient(to right, #77DD77, #4CAF50);
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 12;
+    -fx-padding: 8 20;
+    -fx-cursor: hand;
+    -fx-border: none;
+}
+
+.shop-buy-btn:hover {
+    -fx-background-color: linear-gradient(to right, #66CC66, #3E9E3E);
+}
+
+.shop-buy-btn:disabled {
+    -fx-background-color: #cccccc;
+    -fx-cursor: default;
+}
+
+/* Leaderboard */
+.lb-table {
+    -fx-background-color: transparent;
+}
+
+.lb-row {
+    -fx-background-color: rgba(255,255,255,0.6);
+    -fx-background-radius: 12;
+    -fx-padding: 8 16;
+    -fx-border-color: rgba(200,160,228,0.1);
+    -fx-border-radius: 12;
+    -fx-border-width: 1;
+}
+
+.lb-row:hover {
+    -fx-background-color: rgba(196,144,228,0.15);
+    -fx-cursor: hand;
+}
+
+.lb-rank {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #C490E4;
+    -fx-min-width: 36;
+}
+
+.lb-name {
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #4A3B5C;
+}
+
+.lb-detail {
+    -fx-font-size: 13px;
+    -fx-text-fill: #8B6BAA;
+}
+
+/* Guestbook */
+.gb-entry {
+    -fx-background-color: rgba(255,255,255,0.6);
+    -fx-background-radius: 12;
+    -fx-padding: 10 14;
+    -fx-border-color: rgba(200,160,228,0.1);
+    -fx-border-radius: 12;
+    -fx-border-width: 1;
+}
+
+.gb-visitor {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #C490E4;
+}
+
+.gb-message {
+    -fx-font-size: 14px;
+    -fx-text-fill: #4A3B5C;
+}
+
+.gb-date {
+    -fx-font-size: 11px;
+    -fx-text-fill: #B8A0CC;
+}
+
+/* Mini Game */
+.game-target {
+    -fx-min-width: 60;
+    -fx-min-height: 60;
+    -fx-max-width: 60;
+    -fx-max-height: 60;
+    -fx-background-radius: 30;
+    -fx-border-radius: 30;
+    -fx-background-color: radial-gradient(center 50% 50%, radius 50%, #FF6B8A, #FF3B5C);
+    -fx-border-color: white;
+    -fx-border-width: 3;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(255,59,92,0.4), 15, 0, 0, 4);
+}
+
+.game-target:hover {
+    -fx-background-color: radial-gradient(center 50% 50%, radius 50%, #FF8FAB, #FF5E7E);
+}
+
+.game-score-label {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-text-fill: white;
+}
+
+.game-time-label {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: rgba(255,255,255,0.8);
 }

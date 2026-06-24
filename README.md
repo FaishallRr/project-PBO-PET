@@ -1,18 +1,24 @@
-# Pet Simulator 2D/3D 🐱🐶🐦
+# Pet Simulator 2D Modern 🐱🐶🐦
 
-Virtual Pet Simulator interaktif — pelihara hewan virtualmu dalam mode 2D maupun 3D!
+Virtual Pet Simulator interaktif — pelihara hewan virtualmu dalam mode 2D!
 Dibuat sebagai project PBO (Pemrograman Berorientasi Objek) dengan JavaFX + MySQL.
 
 ## ✨ Fitur
 
-- **Dua Mode Tampilan** — 2D (JavaFX shapes dengan eye tracking, breathing, tail wag) atau 3D chibi dengan lighting
 - **3 Spesies Unik** — Kucing 🐱, Anjing 🐶, Burung 🐦 — masing-masing behavior berbeda
+- **Multi-Pet** — Punya banyak pet sekaligus, ganti dengan navigasi ◀ ▶
+- **Sistem Umur** — Baby 👶 → Adult 🐾 → Senior 👴, tampilan berubah sesuai umur
+- **Mini Game** — Reaction Clicker 🎮, dapetin koin + happiness
+- **Toko & Koin** — Beli makanan/vitamin pake koin 🪙 dari minigame & interaksi
+- **Leaderboard** — Ranking pemain global 🏆 lihat siapa yang paling jago
+- **Kirim Hadiah** — Kasih snack/vitamin ke pet teman 🎁
+- **Guestbook** — Tinggalin pesan di profile pet orang lain 📝
 - **Status Real-time** — Lapar, Senang, Energi, Sehat dalam progress bar warna dinamis
 - **Animasi Smooth** — Floating indicator stat, speech bubble, bounce, hop, level-up sparkle
-- **Persistence** — Auto-save MySQL tiap 30 detik + save manual + load otomatis start
-- **Efek Suara** — 10 suara imut FM-synthesis (meow, bark, chirp, eat, happy, water, chime, snore, sad, click)
+- **Persistence** — Auto-save MySQL + file backup (offline fallback)
+- **Efek Suara** — 10 suara imut FM-synthesis (meow, bark, chirp, eat, happy, dll)
 - **Keyboard Shortcuts** — `1` Makan, `2` Main, `3` Mandi, `4` Vitamin, `5` Tidur
-- **Drag Interaksi** — Petting (drag) kasih happiness + hati melayang; di 3D drag model utk rotate
+- **Drag Interaksi** — Petting (drag) kasih happiness + hati melayang
 - **Level System** — Level naik lewat interaksi, toast + sparkle notification
 - **Sick State** — Pet sakit (health ≤0) butuh vitamin; sembuh bisa makan lagi
 - **Pet 2D Click** — Klik pet 2D → pet bersuara
@@ -28,12 +34,15 @@ Dibuat sebagai project PBO (Pemrograman Berorientasi Objek) dengan JavaFX + MySQ
 | 😴 **TIDUR** | `5` | Tidurkan / bangunkan pet |
 | 🔊 **Sound** | — | Nyalakan/matikan suara |
 | 💾 **Save** | — | Simpan manual ke database |
-| 🔄 **View** | — | Ganti mode 2D ↔ 3D |
+| 🎮 **Mini Game** | — | Main reaction clicker, dapetin koin! |
+| 🛒 **Shop** | — | Beli makanan & vitamin pakai koin |
+| 🏆 **Leaderboard** | — | Lihat ranking pemain global |
+| ➕ **Pet Baru** | — | Buat pet baru |
+| ◀ ▶ **Navigasi** | — | Ganti-ganti pet |
 
 **Interaksi Lain:**
 - **Seret (drag)** pet → kasih happiness + hati 💕
 - **Klik** pet 2D → pet bersuara + ekspresi senang
-- **Seret** model 3D → putar angle pandangan
 
 ## 🖥️ Requirements
 
@@ -73,13 +82,12 @@ mysql -u root < init.sql
 Sesuaikan `run.bat` dengan path JavaFX SDK dan MySQL Connector di komputer kamu:
 ```
 set JAVAFX_PATH=D:\openjfx-26.0.1_windows-x64_bin-sdk\javafx-sdk-26.0.1
-set MYSQL_JAR=D:\MyProject\project-PBO-PET\lib\mysql-connector-j-9.7.0.jar
+set MYSQL_JAR=lib\mysql-connector-j-9.7.0.jar
 ```
 
 ### 4. Sound
 
 **Sudah include!** 10 file `.wav` ada di folder `sound/` — tidak perlu download apa-apa.
-Sound digenerate otomatis via FM synthesis.
 
 ## 🚀 Menjalankan
 
@@ -96,27 +104,27 @@ Script akan compile semua file `.java` lalu menjalankan game.
 project-PBO-PET/
 ├── src/pet/
 │   ├── Main.java              # Entry point
-│   ├── GameGUI.java           # GUI utama (1114 baris)
+│   ├── GameGUI.java           # GUI utama (JavaFX)
 │   ├── Pet.java               # Abstract class Pet
 │   ├── Cat.java               # Kucing
 │   ├── Dog.java               # Anjing
 │   ├── Bird.java              # Burung
 │   ├── Pet2D.java             # Karakter 2D (shapes, eye tracking, breathing)
-│   ├── Pet3D.java             # Karakter 3D (JavaFX 3D primitives, particles)
 │   ├── Food.java              # Abstract food
-│   ├── DryFood.java           # -5 hunger
-│   ├── WetFood.java           # -8 hunger, +5 happiness
-│   ├── Treat.java             # -5 hunger, +10 happiness
+│   ├── DryFood.java           # Makanan kering
+│   ├── WetFood.java           # Makanan basah
+│   ├── Treat.java             # Snack
 │   ├── Careable.java          # Interface: groom() + giveVitamin()
 │   ├── DatabaseManager.java   # JDBC singleton (auto-create DB/table)
-│   └── SoundManager.java      # AudioClip manager singleton
+│   ├── SoundManager.java      # AudioClip manager singleton
+│   └── FileSaveManager.java   # File backup save/load
 ├── lib/
 │   └── mysql-connector-j-9.x.x.jar
 ├── styles.css                 # Glassmorphism dark theme
 ├── init.sql                   # Schema reference
-├── plan.md                    # Full project documentation
 ├── run.bat                    # Compile & run script
 ├── sound/                     # 10 generated WAV files
+├── saves/                     # Auto-generated backup folder
 └── README.md                  # File ini
 ```
 
@@ -126,17 +134,18 @@ project-PBO-PET/
 |--------|-------------|
 | **Inheritance** | `Pet` → `Cat`, `Dog`, `Bird` |
 | **Polymorphism** | `play()`, `makeSound()`, `timePasses()` di override tiap species |
-| **Abstraction** | Abstract class `Pet` + abstract method |
+| **Abstraction** | Abstract class `Pet` + `Food` dengan abstract method |
 | **Interface** | `Careable` → diimplement `Cat`, `Dog`, `Bird` |
 | **Encapsulation** | Field `protected` + setter validasi |
 | **Singleton** | `DatabaseManager`, `SoundManager` |
 | **DAO Pattern** | `DatabaseManager` untuk CRUD pet_save |
 | **MVC** | Model (`Pet`), View (`GameGUI`), Controller (`GameGUI`) |
 | **Polimorfisme Makanan** | `Food` abstract → 3 subclass berbeda efek |
+| **Serialization** | `FileSaveManager` untuk backup file (.dat) |
 
 ## 🎨 GUI Features
 
-- **Dark Theme** — gradient biru malam + glassmorphism panel
+- **Dark Theme** — gradient pastel + glassmorphism panel
 - **Dynamic Progress Bars** — warna berubah berdasarkan nilai (≥70 hijau, 30-69 kuning, <30 merah)
 - **Smooth Animation** — 250ms Timeline transition untuk semua bar
 - **Floating Indicators** — stat change (+5 happiness, -3 hunger) melayang naik + fade
@@ -144,18 +153,19 @@ project-PBO-PET/
 - **Speech Bubble** — cooldown system, ekspresi pet berubah sesuai mood
 - **Keyboard Shortcuts** — `1-5` untuk action buttons + tooltip hover
 - **Responsive Layout** — pet 2D centering otomatis saat resize window
-- **3D Scene** — PerspectiveCamera, PointLight, anti-aliasing, drag-to-rotate
-- **Level-up Toast** — sparkle animation saat level naik
+- **Feature Buttons** — Shop, Mini Game, Leaderboard, Pet Baru
 
 ## 🔄 Simulasi Logic
 
 - **Tick**: setiap 2 detik lewat Timeline game loop
 - **Decay**: hunger, happiness, energy turun gradual
-- **Health penalty**: hanya ketika hunger ≥90 (di `timePasses()`, bukan tiap setter)
+- **Health penalty**: hanya ketika hunger ≥90
 - **Sleep**: energy regen +8 per 4 tick, wake bonus +10
 - **Sick**: health ≤0 → action terbatas → vitamin sembuhkan
 - **Food cycle**: Makan → Dry → Wet → Treat → Dry → ...
 - **Level**: `1 + (totalFeeds + totalPlays) / 10` (hanya kalau health > 0)
+- **Age**: Baby (0-49 ticks) → Adult (50-199) → Senior (200+)
+- **Coins**: +1 per feed, +2 per play, reward dari minigame
 
 ## 🐾 Species Comparison
 
@@ -169,10 +179,6 @@ project-PBO-PET/
 | Senang gain main | +15 | +20 | +10 |
 | Min energy main | 10 | 20 | 15 |
 | Senang gain grooming | +5 | +15 | +10 |
-
-## 📸 Screenshots
-
-> (tambah screenshot setelah menjalankan game)
 
 ## 👨‍💻 Credits
 
