@@ -445,11 +445,17 @@ public class GameGUI extends Application {
             return;
         }
         beginOverlay(0.45);
+        Pane pane = new Pane();
+        pane.setManaged(false);
+        pane.setPickOnBounds(false);
+        pane.resize(overlayW, overlayH);
+        pane.setLayoutX(0);
+        pane.setLayoutY(0);
+
         VBox card = new VBox(14);
-        card.setManaged(false);
-        card.resize(340, 360);
         card.getStyleClass().add("overlay-card");
         card.setMaxWidth(340);
+        card.setPrefWidth(340);
         card.setAlignment(Pos.CENTER);
         card.setPadding(new Insets(24));
         card.setLayoutX((overlayW - 340) / 2);
@@ -524,10 +530,10 @@ public class GameGUI extends Application {
                 "-fx-background-color: #FF6B6B; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 8 32; -fx-background-radius: 12; -fx-cursor: hand;");
         closeBtn.setOnAction(e -> closeCurrentOverlay());
         card.getChildren().addAll(title, list, closeBtn);
-        root.getChildren().add(card);
-        card.layout();
-        currentOverlay = card;
-        card.setUserData("feed");
+        pane.getChildren().add(card);
+        root.getChildren().add(pane);
+        currentOverlay = pane;
+        pane.setUserData("feed");
     }
 
     private void showToast(String message) {
@@ -1443,11 +1449,17 @@ public class GameGUI extends Application {
 
         beginOverlay(0.55);
 
+        Pane pane = new Pane();
+        pane.setManaged(false);
+        pane.setPickOnBounds(false);
+        pane.resize(overlayW, overlayH);
+        pane.setLayoutX(0);
+        pane.setLayoutY(0);
+
         VBox card = new VBox(16);
-        card.setManaged(false);
-        card.resize(520, 500);
         card.getStyleClass().add("overlay-card");
         card.setMaxWidth(520);
+        card.setPrefWidth(520);
         card.setAlignment(Pos.CENTER);
         card.setLayoutX((overlayW - 520) / 2);
         card.setLayoutY((overlayH - 500) / 2);
@@ -1541,6 +1553,8 @@ public class GameGUI extends Application {
 
         card.getChildren().addAll(header, grid, btnRow);
         root.getChildren().add(card);
+        card.applyCss();
+        card.autosize();
         card.layout();
         currentOverlay = card;
         card.setUserData("shop");
@@ -1648,6 +1662,8 @@ public class GameGUI extends Application {
 
         card.getChildren().addAll(header, scroll, refreshBtn);
         root.getChildren().add(card);
+        card.applyCss();
+        card.autosize();
         card.layout();
         currentOverlay = card;
         card.setUserData("leaderboard");
@@ -1715,6 +1731,8 @@ public class GameGUI extends Application {
         btnBox.getChildren().addAll(snackBtn, vitaminBtn);
         card.getChildren().addAll(title, info, btnBox, closeBtn);
         root.getChildren().add(card);
+        card.applyCss();
+        card.autosize();
         card.layout();
         currentOverlay = card;
         card.setUserData("gift");
@@ -1812,6 +1830,8 @@ public class GameGUI extends Application {
 
         card.getChildren().addAll(header, inputRow, scroll);
         root.getChildren().add(card);
+        card.applyCss();
+        card.autosize();
         card.layout();
         currentOverlay = card;
         card.setUserData("guestbook");
