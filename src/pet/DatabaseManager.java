@@ -1,6 +1,5 @@
 package pet;
 
-import java.io.Serializable;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,7 +20,7 @@ public class DatabaseManager {
             System.out.println("[DB] Gagal konek: " + e.getMessage());
             try {
                 Connection initConn = DriverManager.getConnection(
-                    "jdbc:mysql://localhost:3306", DB_USER, DB_PASS);
+                        "jdbc:mysql://localhost:3306", DB_USER, DB_PASS);
                 initConn.createStatement().execute("CREATE DATABASE IF NOT EXISTS pet_simulator");
                 initConn.close();
                 connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
@@ -34,35 +33,39 @@ public class DatabaseManager {
     }
 
     public static DatabaseManager getInstance() {
-        if (instance == null) instance = new DatabaseManager();
+        if (instance == null)
+            instance = new DatabaseManager();
         return instance;
     }
 
     public boolean isConnected() {
-        try { return connection != null && !connection.isClosed(); }
-        catch (SQLException e) { return false; }
+        try {
+            return connection != null && !connection.isClosed();
+        } catch (SQLException e) {
+            return false;
+        }
     }
 
     private void ensureTableExists() {
         String sql = """
-            CREATE TABLE IF NOT EXISTS pet_save (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                owner VARCHAR(50) DEFAULT 'Player',
-                pet_name VARCHAR(50) NOT NULL,
-                species VARCHAR(20) NOT NULL,
-                age INT DEFAULT 0,
-                coins INT DEFAULT 0,
-                hunger INT DEFAULT 50,
-                happiness INT DEFAULT 50,
-                energy INT DEFAULT 50,
-                health INT DEFAULT 100,
-                level INT DEFAULT 1,
-                total_feeds INT DEFAULT 0,
-                total_plays INT DEFAULT 0,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-            )
-        """;
+                    CREATE TABLE IF NOT EXISTS pet_save (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        owner VARCHAR(50) DEFAULT 'Player',
+                        pet_name VARCHAR(50) NOT NULL,
+                        species VARCHAR(20) NOT NULL,
+                        age INT DEFAULT 0,
+                        coins INT DEFAULT 0,
+                        hunger INT DEFAULT 50,
+                        happiness INT DEFAULT 50,
+                        energy INT DEFAULT 50,
+                        health INT DEFAULT 100,
+                        level INT DEFAULT 1,
+                        total_feeds INT DEFAULT 0,
+                        total_plays INT DEFAULT 0,
+                        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                    )
+                """;
         try (Statement stmt = connection.createStatement()) {
             stmt.execute(sql);
         } catch (SQLException e) {
@@ -70,8 +73,8 @@ public class DatabaseManager {
         }
 
         String[] newTables = {
-            "CREATE TABLE IF NOT EXISTS gifts (id INT AUTO_INCREMENT PRIMARY KEY, from_owner VARCHAR(50) NOT NULL, to_owner VARCHAR(50) NOT NULL, to_pet_name VARCHAR(50) NOT NULL, gift_type VARCHAR(30) NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
-            "CREATE TABLE IF NOT EXISTS guestbook (id INT AUTO_INCREMENT PRIMARY KEY, pet_id INT NOT NULL, visitor_owner VARCHAR(50) NOT NULL, message TEXT NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)"
+                "CREATE TABLE IF NOT EXISTS gifts (id INT AUTO_INCREMENT PRIMARY KEY, from_owner VARCHAR(50) NOT NULL, to_owner VARCHAR(50) NOT NULL, to_pet_name VARCHAR(50) NOT NULL, gift_type VARCHAR(30) NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
+                "CREATE TABLE IF NOT EXISTS guestbook (id INT AUTO_INCREMENT PRIMARY KEY, pet_id INT NOT NULL, visitor_owner VARCHAR(50) NOT NULL, message TEXT NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)"
         };
         for (String s : newTables) {
             try (Statement stmt = connection.createStatement()) {
@@ -84,13 +87,13 @@ public class DatabaseManager {
 
     private void migrateSchema() {
         String[] migrations = {
-            "ALTER TABLE pet_save ADD COLUMN owner VARCHAR(50) DEFAULT 'Player'",
-            "ALTER TABLE pet_save ADD COLUMN age INT DEFAULT 0",
-            "ALTER TABLE pet_save ADD COLUMN coins INT DEFAULT 0",
-            "ALTER TABLE pet_save ADD COLUMN dry_food INT DEFAULT 0",
-            "ALTER TABLE pet_save ADD COLUMN wet_food INT DEFAULT 0",
-            "ALTER TABLE pet_save ADD COLUMN treat INT DEFAULT 0",
-            "ALTER TABLE pet_save ADD COLUMN vitamin INT DEFAULT 0"
+                "ALTER TABLE pet_save ADD COLUMN owner VARCHAR(50) DEFAULT 'Player'",
+                "ALTER TABLE pet_save ADD COLUMN age INT DEFAULT 0",
+                "ALTER TABLE pet_save ADD COLUMN coins INT DEFAULT 0",
+                "ALTER TABLE pet_save ADD COLUMN dry_food INT DEFAULT 0",
+                "ALTER TABLE pet_save ADD COLUMN wet_food INT DEFAULT 0",
+                "ALTER TABLE pet_save ADD COLUMN treat INT DEFAULT 0",
+                "ALTER TABLE pet_save ADD COLUMN vitamin INT DEFAULT 0"
         };
         for (String sql : migrations) {
             try (Statement stmt = connection.createStatement()) {
@@ -102,22 +105,10 @@ public class DatabaseManager {
         }
     }
 
-    public static class PetSaveData implements Serializable {
-        private static final long serialVersionUID = 1L;
-        public int id;
-        public String owner;
-        public String petName;
-        public String species;
-        public int age;
-        public int coins;
-        public int hunger, happiness, energy, health, level;
-        public int totalFeeds, totalPlays;
-        public int dryFood, wetFood, treat, vitamin;
-    }
-
     public List<PetSaveData> getPetsByOwner(String owner) {
         List<PetSaveData> list = new ArrayList<>();
-        if (!isConnected()) return list;
+        if (!isConnected())
+            return list;
         String sql = "SELECT * FROM pet_save WHERE owner = ? ORDER BY updated_at DESC";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, owner);
@@ -134,10 +125,11 @@ public class DatabaseManager {
 
     public List<PetSaveData> getLeaderboard() {
         List<PetSaveData> list = new ArrayList<>();
-        if (!isConnected()) return list;
+        if (!isConnected())
+            return list;
         String sql = "SELECT * FROM pet_save ORDER BY level DESC, coins DESC LIMIT 50";
         try (Statement stmt = connection.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
+                ResultSet rs = stmt.executeQuery(sql)) {
             while (rs.next()) {
                 list.add(readPetData(rs));
             }
@@ -148,10 +140,11 @@ public class DatabaseManager {
     }
 
     public PetSaveData loadLatestPet() {
-        if (!isConnected()) return null;
+        if (!isConnected())
+            return null;
         String sql = "SELECT * FROM pet_save ORDER BY updated_at DESC LIMIT 1";
         try (Statement stmt = connection.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
+                ResultSet rs = stmt.executeQuery(sql)) {
             if (rs.next()) {
                 return readPetData(rs);
             }
@@ -184,7 +177,8 @@ public class DatabaseManager {
     }
 
     public int savePet(PetSaveData data) {
-        if (!isConnected()) return -1;
+        if (!isConnected())
+            return -1;
         if (data.id > 0) {
             String sql = "UPDATE pet_save SET owner=?, pet_name=?, species=?, age=?, coins=?, hunger=?, happiness=?, energy=?, health=?, level=?, total_feeds=?, total_plays=?, dry_food=?, wet_food=?, treat=?, vitamin=?, updated_at=CURRENT_TIMESTAMP WHERE id=?";
             try (PreparedStatement ps = connection.prepareStatement(sql)) {
@@ -231,7 +225,8 @@ public class DatabaseManager {
                 ps.setInt(16, data.vitamin);
                 ps.executeUpdate();
                 try (ResultSet rs = ps.getGeneratedKeys()) {
-                    if (rs.next()) return rs.getInt(1);
+                    if (rs.next())
+                        return rs.getInt(1);
                 }
             } catch (SQLException e) {
                 System.out.println("[DB] Gagal insert: " + e.getMessage());
@@ -241,7 +236,8 @@ public class DatabaseManager {
     }
 
     public void sendGift(String fromOwner, String toOwner, String toPetName, String giftType) {
-        if (!isConnected()) return;
+        if (!isConnected())
+            return;
         String sql = "INSERT INTO gifts (from_owner, to_owner, to_pet_name, gift_type) VALUES (?,?,?,?)";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, fromOwner);
@@ -255,14 +251,17 @@ public class DatabaseManager {
     }
 
     public boolean canSendGiftToday(String fromOwner, String toOwner, String toPetName) {
-        if (!isConnected()) return true;
+        if (!isConnected())
+            return true;
         String sql = "SELECT COUNT(*) FROM gifts WHERE from_owner=? AND to_owner=? AND to_pet_name=? AND DATE(created_at)=CURDATE()";
+        // cek berapa kali sudah kirim hadiah hari ini
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, fromOwner);
             ps.setString(2, toOwner);
             ps.setString(3, toPetName);
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return rs.getInt(1) == 0;
+                if (rs.next())
+                    return rs.getInt(1) == 0;
             }
         } catch (SQLException e) {
             System.out.println("[DB] Gagal cek hadiah: " + e.getMessage());
@@ -272,13 +271,15 @@ public class DatabaseManager {
 
     public List<String[]> getGuestbook(int petId) {
         List<String[]> list = new ArrayList<>();
-        if (!isConnected()) return list;
+        if (!isConnected())
+            return list;
         String sql = "SELECT visitor_owner, message, created_at FROM guestbook WHERE pet_id=? ORDER BY created_at DESC LIMIT 50";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, petId);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    list.add(new String[]{rs.getString("visitor_owner"), rs.getString("message"), rs.getString("created_at")});
+                    list.add(new String[] { rs.getString("visitor_owner"), rs.getString("message"),
+                            rs.getString("created_at") });
                 }
             }
         } catch (SQLException e) {
@@ -288,7 +289,8 @@ public class DatabaseManager {
     }
 
     public void addGuestbookEntry(int petId, String visitorOwner, String message) {
-        if (!isConnected()) return;
+        if (!isConnected())
+            return;
         String sql = "INSERT INTO guestbook (pet_id, visitor_owner, message) VALUES (?,?,?)";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, petId);
@@ -306,7 +308,8 @@ public class DatabaseManager {
 
     public void close() {
         try {
-            if (connection != null && !connection.isClosed()) connection.close();
+            if (connection != null && !connection.isClosed())
+                connection.close();
         } catch (SQLException e) {
             System.out.println("[DB] Gagal tutup: " + e.getMessage());
         }

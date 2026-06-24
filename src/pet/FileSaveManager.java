@@ -17,18 +17,18 @@ public class FileSaveManager {
     }
 
     @SuppressWarnings("unchecked")
-    public List<DatabaseManager.PetSaveData> load() {
+    public List<PetSaveData> load() {
         File f = new File(SAVE_FILE);
         if (!f.exists()) return new ArrayList<>();
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(SAVE_FILE))) {
-            return (List<DatabaseManager.PetSaveData>) ois.readObject();
+            return (List<PetSaveData>) ois.readObject();
         } catch (IOException | ClassNotFoundException e) {
             System.out.println("[FileSave] Gagal load file: " + e.getMessage());
             return new ArrayList<>();
         }
     }
 
-    public void save(List<DatabaseManager.PetSaveData> pets) {
+    public void save(List<PetSaveData> pets) {
         if (pets == null || pets.isEmpty()) return;
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(SAVE_FILE))) {
             oos.writeObject(pets);
