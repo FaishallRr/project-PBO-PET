@@ -531,7 +531,7 @@ public class GameGUI extends Application {
         closeBtn.setOnAction(e -> closeCurrentOverlay());
         card.getChildren().addAll(title, list, closeBtn);
         pane.getChildren().add(card);
-        root.getChildren().add(pane);
+        centerPane.getChildren().add(pane);
         currentOverlay = pane;
         pane.setUserData("feed");
     }
@@ -757,18 +757,26 @@ public class GameGUI extends Application {
         if (speechFadeTimer != null) {
             speechFadeTimer.stop();
         }
+
         speechLabel.setText(text);
         speechLabel.setVisible(true);
         speechLabel.toFront();
         speechLabel.setOpacity(1);
-        double paneW = centerPane.getWidth();
-        if (paneW < 100)
-            paneW = 800;
-        double labelW = speechLabel.prefWidth(-1);
-        if (labelW < 0)
-            labelW = 300;
-        speechLabel.setTranslateX(Math.max(10, (paneW - labelW) / 2));
-        speechLabel.setTranslateY(20);
+
+        // Set width & height dengan reasonable default
+        speechLabel.setPrefWidth(350);
+        speechLabel.setWrapText(true);
+
+        // Position di tengah atas
+        double screenW = stage.getWidth();
+        if (screenW < 400) screenW = 1000;
+
+        double x = (screenW - 350) / 2.0;
+        if (x < 10) x = 10;
+
+        speechLabel.setLayoutX(x);
+        speechLabel.setLayoutY(20);
+
         speechCooldownTicks = 3;
 
         speechFadeTimer = new Timeline(
@@ -1088,7 +1096,7 @@ public class GameGUI extends Application {
             }
 
             // Age progression
-            if (tickCount % 50 == 0) {
+            if (tickCount % 50 == 0) { // 50 kali loop
                 age++;
                 if (pet != null) {
                     pet.setAge(age);
@@ -1279,23 +1287,23 @@ public class GameGUI extends Application {
 
     private void closeCurrentOverlay() {
         if (currentOverlay != null) {
-            root.getChildren().remove(currentOverlay);
+            centerPane.getChildren().remove(currentOverlay);  // ✅ REMOVE FROM centerPane
             currentOverlay = null;
         }
         if (currentOverlayBg != null) {
-            root.getChildren().remove(currentOverlayBg);
+            centerPane.getChildren().remove(currentOverlayBg);  // ✅ REMOVE FROM centerPane
             currentOverlayBg = null;
         }
     }
 
     private void beginOverlay(double bgOpacity) {
         closeCurrentOverlay();
-        overlayW = root.getWidth() < 100 ? W : root.getWidth();
-        overlayH = root.getHeight() < 100 ? H : root.getHeight();
+        overlayW = centerPane.getWidth() < 100 ? W : centerPane.getWidth();
+        overlayH = centerPane.getHeight() < 100 ? H : centerPane.getHeight();
         Rectangle bg = new Rectangle(overlayW, overlayH, Color.rgb(0, 0, 0, bgOpacity));
         bg.setManaged(false);
         bg.setMouseTransparent(true);
-        root.getChildren().add(bg);
+        centerPane.getChildren().add(bg);  // ✅ ADD TO centerPane, NOT root
         currentOverlayBg = bg;
     }
 
@@ -1354,7 +1362,7 @@ public class GameGUI extends Application {
 
         Group content = new Group(titleLbl, scoreLbl, timeLbl, target, closeBtn);
         content.setManaged(false);
-        root.getChildren().add(content);
+        centerPane.getChildren().add(content);
         currentOverlay = content;
         content.setUserData("minigame");
 
@@ -1552,7 +1560,7 @@ public class GameGUI extends Application {
         btnRow.getChildren().add(closeBtn);
 
         card.getChildren().addAll(header, grid, btnRow);
-        root.getChildren().add(card);
+        centerPane.getChildren().add(card);
         card.applyCss();
         card.autosize();
         card.layout();
@@ -1568,6 +1576,11 @@ public class GameGUI extends Application {
 
     private void showLeaderboard() {
         beginOverlay(0.55);
+
+        Pane pane = new Pane();
+        pane.setManaged(false);
+        pane.setPickOnBounds(false);
+        pane.resize(overlayW, overlayH);
 
         VBox card = new VBox(12);
         card.setManaged(false);
@@ -1661,12 +1674,10 @@ public class GameGUI extends Application {
         });
 
         card.getChildren().addAll(header, scroll, refreshBtn);
-        root.getChildren().add(card);
-        card.applyCss();
-        card.autosize();
-        card.layout();
-        currentOverlay = card;
-        card.setUserData("leaderboard");
+        pane.getChildren().add(card);
+        centerPane.getChildren().add(pane);
+        currentOverlay = pane;
+        pane.setUserData("leaderboard");
     }
 
     private void sendGift(String toOwner, String toPetName) {
@@ -1730,7 +1741,7 @@ public class GameGUI extends Application {
 
         btnBox.getChildren().addAll(snackBtn, vitaminBtn);
         card.getChildren().addAll(title, info, btnBox, closeBtn);
-        root.getChildren().add(card);
+        centerPane.getChildren().add(card);
         card.applyCss();
         card.autosize();
         card.layout();
@@ -1746,6 +1757,11 @@ public class GameGUI extends Application {
 
     private void showGuestbook(int petId, String petName) {
         beginOverlay(0.55);
+
+        Pane pane = new Pane();
+        pane.setManaged(false);
+        pane.setPickOnBounds(false);
+        pane.resize(overlayW, overlayH);
 
         VBox card = new VBox(12);
         card.setManaged(false);
@@ -1829,12 +1845,10 @@ public class GameGUI extends Application {
         });
 
         card.getChildren().addAll(header, inputRow, scroll);
-        root.getChildren().add(card);
-        card.applyCss();
-        card.autosize();
-        card.layout();
-        currentOverlay = card;
-        card.setUserData("guestbook");
+        pane.getChildren().add(card);
+        centerPane.getChildren().add(pane);
+        currentOverlay = pane;
+        pane.setUserData("guestbook");
     }
 
     /*
